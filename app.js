@@ -1,5 +1,5 @@
 /* =========================================================
-   RESEARCH — ISBN SCANNER
+   RESEARCH — ISBN SCANNER V3
    ========================================================= */
 
 
@@ -10,14 +10,20 @@
 const video =
   document.getElementById("video");
 
-const startScan =
-  document.getElementById("startScan");
+const cameraPlaceholder =
+  document.getElementById("cameraPlaceholder");
 
-const stopScan =
-  document.getElementById("stopScan");
+const scannerOverlay =
+  document.getElementById("scannerOverlay");
 
-const scanMessage =
-  document.getElementById("scanMessage");
+const startCamera =
+  document.getElementById("startCamera");
+
+const stopCamera =
+  document.getElementById("stopCamera");
+
+const cameraStatus =
+  document.getElementById("cameraStatus");
 
 const photoInput =
   document.getElementById("photoInput");
@@ -25,29 +31,35 @@ const photoInput =
 const cropCard =
   document.getElementById("cropCard");
 
+const cropContainer =
+  document.getElementById("cropContainer");
+
 const cropImage =
   document.getElementById("cropImage");
 
 const readCrop =
   document.getElementById("readCrop");
 
-const cropMessage =
-  document.getElementById("cropMessage");
+const newPhoto =
+  document.getElementById("newPhoto");
+
+const cropStatus =
+  document.getElementById("cropStatus");
 
 const isbnInput =
   document.getElementById("isbn");
 
-const copyButton =
-  document.getElementById("copy");
+const copyISBN =
+  document.getElementById("copyISBN");
 
-const resultMessage =
-  document.getElementById("resultMessage");
+const resultStatus =
+  document.getElementById("resultStatus");
 
 const vintedButton =
-  document.getElementById("vinted");
+  document.getElementById("vintedButton");
 
 const googleButton =
-  document.getElementById("google");
+  document.getElementById("googleButton");
 
 
 /* =========================================================
@@ -56,9 +68,9 @@ const googleButton =
 
 let stream = null;
 
-let reader = null;
-
 let cropper = null;
+
+let reader = null;
 
 let scanning = false;
 
@@ -67,31 +79,48 @@ let scanning = false;
    INITIALISATION ZXING
    ========================================================= */
 
-function initReader() {
+function initialiseReader() {
 
   try {
 
-    reader =
-      new ZXingBrowser.BrowserMultiFormatReader();
+    if (
+      typeof ZXingBrowser ===
+      "undefined"
+    ) {
 
-    console.log("ZXing chargé.");
+      throw new Error(
+        "ZXing n'est pas chargé."
+      );
+
+    }
+
+
+    reader =
+      new ZXingBrowser
+        .BrowserMultiFormatReader();
+
+
+    console.log(
+      "ZXing correctement chargé."
+    );
+
 
   } catch (error) {
 
-    console.error(
-      "Erreur ZXing :",
-      error
-    );
+    console.error(error);
 
-    scanMessage.textContent =
-      "Impossible de charger le lecteur de codes-barres.";
+    cameraStatus.textContent =
+      "⚠️ Le lecteur de codes-barres n'a pas pu être chargé.";
 
-    scanMessage.className =
-      "message error";
+    cameraStatus.className =
+      "diagnostic error";
+
   }
+
 }
 
-initReader();
+
+initialiseReader();
 
 
 /* =========================================================
@@ -100,12 +129,12 @@ initReader();
 
 
 /*
- * Nettoyage.
+ * Nettoie une chaîne.
  */
 
-function clean(value) {
+function cleanISBN(value) {
 
-  return value
+  return String(value || "")
     .toUpperCase()
     .replace(/[^0-9X]/g, "");
 
@@ -113,16 +142,18 @@ function clean(value) {
 
 
 /*
- * Vérification ISBN-13.
+ * Validation ISBN-13.
  */
 
-function validISBN13(isbn) {
+function isValidISBN13(isbn) {
 
   if (!/^\d{13}$/.test(isbn)) {
     return false;
   }
 
+
   let sum = 0;
+
 
   for (
     let i = 0;
@@ -136,28 +167,36 @@ function validISBN13(isbn) {
 
   }
 
-  const check =
-    (10 - sum % 10) % 10;
 
-  return check ===
-    Number(isbn[12]);
+  const check =
+    (10 - (sum % 10)) % 10;
+
+
+  return (
+    check ===
+    Number(isbn[12])
+  );
 
 }
 
 
 /*
- * Vérification ISBN-10.
+ * Validation ISBN-10.
  */
 
-function validISBN10(isbn) {
+function isValidISBN10(isbn) {
 
   if (
     !/^\d{9}[\dX]$/.test(isbn)
   ) {
+
     return false;
+
   }
 
+
   let sum = 0;
+
 
   for (
     let i = 0;
@@ -170,26 +209,33 @@ function validISBN10(isbn) {
         ? 10
         : Number(isbn[i]);
 
+
     sum +=
       value * (10 - i);
+
   }
 
-  return sum % 11 === 0;
+
+  return (
+    sum % 11 === 0
+  );
 
 }
 
 
 /*
- * ISBN-10 → ISBN-13
+ * Conversion ISBN-10 vers ISBN-13.
  */
 
-function convertISBN10(isbn10) {
+function isbn10To13(isbn10) {
 
   const base =
     "978" +
     isbn10.substring(0, 9);
 
+
   let sum = 0;
+
 
   for (
     let i = 0;
@@ -203,8 +249,10 @@ function convertISBN10(isbn10) {
 
   }
 
+
   const check =
-    (10 - sum % 10) % 10;
+    (10 - (sum % 10)) % 10;
+
 
   return base + check;
 
@@ -212,7 +260,7 @@ function convertISBN10(isbn10) {
 
 
 /*
- * Recherche d'un ISBN dans du texte.
+ * Cherche un ISBN dans un texte.
  */
 
 function findISBN(text) {
@@ -221,18 +269,19 @@ function findISBN(text) {
     return null;
   }
 
+
   /*
-   * On regarde d'abord exactement
-   * ce que le scanner a retourné.
+   * Cas où le lecteur renvoie
+   * directement le code.
    */
 
   const cleaned =
-    clean(text);
+    cleanISBN(text);
 
 
   if (
     cleaned.length === 13 &&
-    validISBN13(cleaned)
+    isValidISBN13(cleaned)
   ) {
 
     return cleaned;
@@ -242,30 +291,32 @@ function findISBN(text) {
 
   if (
     cleaned.length === 10 &&
-    validISBN10(cleaned)
+    isValidISBN10(cleaned)
   ) {
 
-    return convertISBN10(cleaned);
+    return isbn10To13(cleaned);
 
   }
 
 
   /*
-   * Recherche d'un ISBN-13
-   * à l'intérieur d'un texte.
+   * Recherche ISBN-13 dans le texte.
    */
 
-  const isbn13 =
-    text.match(/\d{13}/g);
+  const matches13 =
+    String(text).match(
+      /\d{13}/g
+    );
 
-  if (isbn13) {
+
+  if (matches13) {
 
     for (
-      const candidate of isbn13
+      const candidate of matches13
     ) {
 
       if (
-        validISBN13(candidate)
+        isValidISBN13(candidate)
       ) {
 
         return candidate;
@@ -281,25 +332,27 @@ function findISBN(text) {
    * Recherche ISBN-10.
    */
 
-  const isbn10 =
-    text.match(
+  const matches10 =
+    String(text).match(
       /\d{9}[\dXx]/g
     );
 
-  if (isbn10) {
+
+  if (matches10) {
 
     for (
-      const candidate of isbn10
+      const candidate of matches10
     ) {
 
       const value =
         candidate.toUpperCase();
 
+
       if (
-        validISBN10(value)
+        isValidISBN10(value)
       ) {
 
-        return convertISBN10(value);
+        return isbn10To13(value);
 
       }
 
@@ -314,106 +367,327 @@ function findISBN(text) {
 
 
 /*
- * Affichage résultat.
+ * Affichage ISBN.
  */
 
-function showISBN(isbn) {
+function displayISBN(isbn) {
 
-  isbnInput.value = isbn;
+  isbnInput.value =
+    isbn;
 
-  resultMessage.textContent =
-    "✓ ISBN détecté : " + isbn;
 
-  resultMessage.className =
+  resultStatus.textContent =
+    "✓ ISBN détecté : " +
+    isbn;
+
+
+  resultStatus.className =
     "message success";
 
-  vintedButton.disabled = false;
 
-  googleButton.disabled = false;
+  vintedButton.disabled =
+    false;
+
+
+  googleButton.disabled =
+    false;
 
 }
 
 
 /* =========================================================
-   CAMERA
+   CAMERA — DIAGNOSTIC
    ========================================================= */
 
-startScan.addEventListener(
-  "click",
-  async () => {
+async function startCameraStream() {
 
-    if (!reader) {
+  /*
+   * Vérification HTTPS.
+   */
 
-      initReader();
+  if (
+    location.protocol !== "https:" &&
+    location.hostname !== "localhost"
+  ) {
 
-      if (!reader) {
-        return;
+    cameraStatus.textContent =
+      "⚠️ La caméra nécessite HTTPS. Utilise l'adresse GitHub Pages.";
+
+    cameraStatus.className =
+      "diagnostic error";
+
+    return false;
+
+  }
+
+
+  /*
+   * Vérification de getUserMedia.
+   */
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    cameraStatus.textContent =
+      "⚠️ Ce navigateur ne permet pas l'accès à la caméra.";
+
+    cameraStatus.className =
+      "diagnostic error";
+
+    return false;
+
+  }
+
+
+  try {
+
+    cameraStatus.textContent =
+      "⏳ Demande d'autorisation caméra…";
+
+    cameraStatus.className =
+      "diagnostic";
+
+
+    /*
+     * Caméra arrière.
+     */
+
+    stream =
+      await navigator.mediaDevices
+        .getUserMedia({
+
+          audio: false,
+
+          video: {
+
+            facingMode: {
+              ideal: "environment"
+            },
+
+            width: {
+              ideal: 1920
+            },
+
+            height: {
+              ideal: 1080
+            }
+
+          }
+
+        });
+
+
+    console.log(
+      "Flux caméra obtenu :",
+      stream
+    );
+
+
+    /*
+     * Connexion du flux à la vidéo.
+     */
+
+    video.srcObject =
+      stream;
+
+
+    /*
+     * Important sur certains mobiles :
+     * attendre les métadonnées avant play().
+     */
+
+    await new Promise(
+      resolve => {
+
+        if (
+          video.readyState >= 1
+        ) {
+
+          resolve();
+
+        } else {
+
+          video.onloadedmetadata =
+            () => resolve();
+
+        }
+
       }
+    );
+
+
+    await video.play();
+
+
+    /*
+     * Vérification que le flux
+     * produit réellement une image.
+     */
+
+    if (
+      video.videoWidth === 0 ||
+      video.videoHeight === 0
+    ) {
+
+      throw new Error(
+        "La caméra ne fournit aucune image."
+      );
 
     }
 
 
+    console.log(
+      "Résolution caméra :",
+      video.videoWidth,
+      "x",
+      video.videoHeight
+    );
+
+
+    cameraPlaceholder
+      .classList
+      .add("hidden");
+
+
+    scannerOverlay
+      .classList
+      .remove("hidden");
+
+
+    startCamera
+      .classList
+      .add("hidden");
+
+
+    stopCamera
+      .classList
+      .remove("hidden");
+
+
+    cameraStatus.textContent =
+      "✓ Caméra active — place le code-barres dans le cadre.";
+
+    cameraStatus.className =
+      "diagnostic success";
+
+
+    return true;
+
+
+  } catch (error) {
+
+    console.error(
+      "Erreur caméra :",
+      error
+    );
+
+
+    /*
+     * Messages adaptés aux erreurs
+     * les plus fréquentes.
+     */
+
+    if (
+      error.name ===
+      "NotAllowedError"
+    ) {
+
+      cameraStatus.textContent =
+        "❌ Accès caméra refusé. Autorise la caméra pour ce site dans les réglages du navigateur.";
+
+    } else if (
+      error.name ===
+      "NotFoundError"
+    ) {
+
+      cameraStatus.textContent =
+        "❌ Aucune caméra trouvée.";
+
+    } else if (
+      error.name ===
+      "NotReadableError"
+    ) {
+
+      cameraStatus.textContent =
+        "❌ La caméra est utilisée par une autre application.";
+
+    } else {
+
+      cameraStatus.textContent =
+        "❌ Impossible d'ouvrir la caméra : " +
+        error.message;
+
+    }
+
+
+    cameraStatus.className =
+      "diagnostic error";
+
+
+    return false;
+
+  }
+
+}
+
+
+/* =========================================================
+   CAMERA — SCAN
+   ========================================================= */
+
+startCamera.addEventListener(
+  "click",
+  async () => {
+
+    if (scanning) {
+      return;
+    }
+
+
+    /*
+     * Ouvrir la caméra.
+     */
+
+    const opened =
+      await startCameraStream();
+
+
+    if (!opened) {
+      return;
+    }
+
+
+    /*
+     * ZXing doit être disponible.
+     */
+
+    if (!reader) {
+
+      initialiseReader();
+
+    }
+
+
+    if (!reader) {
+
+      cameraStatus.textContent =
+        "✓ Caméra active, mais le lecteur de codes-barres n'est pas disponible.";
+
+      return;
+
+    }
+
+
+    scanning = true;
+
+
+    /*
+     * Lecture continue.
+     */
+
     try {
-
-      scanMessage.textContent =
-        "Activation de la caméra…";
-
-      scanMessage.className =
-        "message";
-
-
-      /*
-       * Demande explicite de la caméra arrière.
-       */
-
-      stream =
-        await navigator.mediaDevices
-          .getUserMedia({
-
-            video: {
-              facingMode: {
-                ideal: "environment"
-              },
-
-              width: {
-                ideal: 1920
-              },
-
-              height: {
-                ideal: 1080
-              }
-            },
-
-            audio: false
-
-          });
-
-
-      video.srcObject =
-        stream;
-
-      await video.play();
-
-
-      scanning = true;
-
-
-      startScan.classList.add(
-        "hidden"
-      );
-
-      stopScan.classList.remove(
-        "hidden"
-      );
-
-
-      scanMessage.textContent =
-        "Place le code-barres dans le cadre…";
-
-
-      /*
-       * Lecture continue.
-       */
 
       reader.decodeFromVideoElement(
         video,
@@ -426,35 +700,42 @@ startScan.addEventListener(
 
           if (result) {
 
-            const text =
+            const raw =
               result.getText();
+
 
             console.log(
               "Code détecté :",
-              text
+              raw
             );
 
 
             const isbn =
-              findISBN(text);
+              findISBN(raw);
 
 
             if (isbn) {
 
-              showISBN(isbn);
+              displayISBN(isbn);
 
-              scanMessage.textContent =
+
+              cameraStatus.textContent =
                 "✓ ISBN trouvé !";
 
-              scanMessage.className =
-                "message success";
+
+              cameraStatus.className =
+                "diagnostic success";
+
 
               stopCamera();
 
             } else {
 
-              scanMessage.textContent =
-                "Code détecté, mais pas reconnu comme ISBN.";
+              cameraStatus.textContent =
+                "Code détecté, mais il ne correspond pas à un ISBN.";
+
+              cameraStatus.className =
+                "diagnostic";
 
             }
 
@@ -467,16 +748,16 @@ startScan.addEventListener(
     } catch (error) {
 
       console.error(
-        "Erreur caméra :",
+        "Erreur ZXing :",
         error
       );
 
 
-      scanMessage.textContent =
-        "Impossible d'accéder à la caméra. Vérifie l'autorisation du navigateur.";
+      cameraStatus.textContent =
+        "⚠️ La caméra fonctionne, mais la lecture du code-barres a échoué.";
 
-      scanMessage.className =
-        "message error";
+      cameraStatus.className =
+        "diagnostic error";
 
     }
 
@@ -485,7 +766,7 @@ startScan.addEventListener(
 
 
 /* =========================================================
-   ARRÊT CAMERA
+   STOP CAMERA
    ========================================================= */
 
 function stopCamera() {
@@ -506,21 +787,51 @@ function stopCamera() {
   }
 
 
+  video.pause();
+
   video.srcObject = null;
 
 
-  startScan.classList.remove(
-    "hidden"
-  );
+  scannerOverlay
+    .classList
+    .add("hidden");
 
-  stopScan.classList.add(
-    "hidden"
-  );
+
+  cameraPlaceholder
+    .classList
+    .remove("hidden");
+
+
+  startCamera
+    .classList
+    .remove("hidden");
+
+
+  stopCamera
+    .classList
+    .add("hidden");
+
+
+  if (
+    cameraStatus.classList
+      .contains("success")
+  ) {
+
+    return;
+
+  }
+
+
+  cameraStatus.textContent =
+    "Caméra inactive";
+
+  cameraStatus.className =
+    "diagnostic";
 
 }
 
 
-stopScan.addEventListener(
+stopCamera.addEventListener(
   "click",
   stopCamera
 );
@@ -537,27 +848,17 @@ photoInput.addEventListener(
     const file =
       event.target.files[0];
 
+
     if (!file) {
       return;
     }
 
 
     /*
-     * Arrêt caméra si elle tourne.
+     * Arrêter la caméra.
      */
 
     stopCamera();
-
-
-    const url =
-      URL.createObjectURL(file);
-
-
-    cropImage.src = url;
-
-    cropCard.classList.remove(
-      "hidden"
-    );
 
 
     /*
@@ -573,38 +874,80 @@ photoInput.addEventListener(
     }
 
 
+    cropStatus.textContent =
+      "⏳ Chargement de la photo…";
+
+    cropStatus.className =
+      "message";
+
+
+    /*
+     * URL temporaire de la photo.
+     */
+
+    const imageURL =
+      URL.createObjectURL(file);
+
+
+    /*
+     * IMPORTANT :
+     * afficher la carte AVANT
+     * de charger l'image.
+     */
+
+    cropCard
+      .classList
+      .remove("hidden");
+
+
+    /*
+     * Reset image.
+     */
+
+    cropImage.removeAttribute(
+      "src"
+    );
+
+
+    /*
+     * Attendre le chargement réel.
+     */
+
     cropImage.onload =
       () => {
+
+        console.log(
+          "Image chargée :",
+          cropImage.naturalWidth,
+          "x",
+          cropImage.naturalHeight
+        );
+
+
+        cropStatus.textContent =
+          "✓ Photo chargée. Sélectionne le code-barres.";
+
+        cropStatus.className =
+          "message success";
+
+
+        /*
+         * Initialisation Cropper
+         * APRÈS chargement complet.
+         */
 
         cropper =
           new Cropper(
             cropImage,
             {
 
-              /*
-               * Permet de déplacer
-               * et redimensionner la sélection.
-               */
-
               viewMode: 1,
 
               dragMode: "crop",
 
-              autoCropArea: 0.7,
-
               responsive: true,
 
-              background: false,
-
-              movable: true,
-
-              zoomable: true,
-
-              zoomOnWheel: true,
-
-              cropBoxMovable: true,
-
-              cropBoxResizable: true,
+              restore: false,
 
               guides: true,
 
@@ -612,20 +955,101 @@ photoInput.addEventListener(
 
               highlight: true,
 
+              background: true,
+
+              autoCrop: true,
+
+              autoCropArea: 0.65,
+
+              movable: true,
+
+              zoomable: true,
+
+              zoomOnWheel: false,
+
+              cropBoxMovable: true,
+
+              cropBoxResizable: true,
+
               toggleDragModeOnDblclick:
                 false
 
             }
           );
 
+
+        /*
+         * Libérer l'URL temporaire
+         * après chargement.
+         */
+
+        URL.revokeObjectURL(
+          imageURL
+        );
+
       };
+
+
+    cropImage.onerror =
+      () => {
+
+        cropStatus.textContent =
+          "❌ Impossible d'afficher cette photo.";
+
+        cropStatus.className =
+          "message error";
+
+      };
+
+
+    /*
+     * Déclenche le chargement.
+     */
+
+    cropImage.src =
+      imageURL;
 
   }
 );
 
 
 /* =========================================================
-   LECTURE DE LA PHOTO RECADRÉE
+   NOUVELLE PHOTO
+   ========================================================= */
+
+newPhoto.addEventListener(
+  "click",
+  () => {
+
+    if (cropper) {
+
+      cropper.destroy();
+
+      cropper = null;
+
+    }
+
+
+    cropCard
+      .classList
+      .add("hidden");
+
+
+    /*
+     * Permet de sélectionner
+     * à nouveau le même fichier.
+     */
+
+    photoInput.value = "";
+
+    photoInput.click();
+
+  }
+);
+
+
+/* =========================================================
+   LECTURE DU CROP
    ========================================================= */
 
 readCrop.addEventListener(
@@ -634,10 +1058,30 @@ readCrop.addEventListener(
 
     if (!cropper) {
 
-      cropMessage.textContent =
-        "Sélectionne d'abord une zone.";
+      cropStatus.textContent =
+        "❌ La zone de recadrage n'est pas prête.";
 
-      cropMessage.className =
+      cropStatus.className =
+        "message error";
+
+      return;
+
+    }
+
+
+    if (!reader) {
+
+      initialiseReader();
+
+    }
+
+
+    if (!reader) {
+
+      cropStatus.textContent =
+        "❌ Le lecteur de codes-barres n'est pas disponible.";
+
+      cropStatus.className =
         "message error";
 
       return;
@@ -648,35 +1092,50 @@ readCrop.addEventListener(
     readCrop.disabled = true;
 
     readCrop.textContent =
-      "🔎 Lecture en cours…";
+      "🔎 Analyse…";
 
 
-    cropMessage.textContent =
-      "Analyse du code-barres…";
+    cropStatus.textContent =
+      "Analyse de la zone sélectionnée…";
 
-    cropMessage.className =
+    cropStatus.className =
       "message";
 
 
     try {
 
       /*
-       * Génération de l'image recadrée.
+       * Récupération du crop.
        */
 
       const canvas =
         cropper.getCroppedCanvas({
 
+          /*
+           * Haute résolution pour
+           * faciliter la lecture.
+           */
+
           width: 1800,
 
           height: 1200,
 
-          imageSmoothingEnabled: true,
+          imageSmoothingEnabled:
+            true,
 
           imageSmoothingQuality:
             "high"
 
         });
+
+
+      if (!canvas) {
+
+        throw new Error(
+          "Canvas impossible à créer."
+        );
+
+      }
 
 
       /*
@@ -686,6 +1145,7 @@ readCrop.addEventListener(
       const image =
         new Image();
 
+
       image.src =
         canvas.toDataURL(
           "image/jpeg",
@@ -694,10 +1154,13 @@ readCrop.addEventListener(
 
 
       await new Promise(
-        resolve => {
+        (resolve, reject) => {
 
           image.onload =
             resolve;
+
+          image.onerror =
+            reject;
 
         }
       );
@@ -713,53 +1176,65 @@ readCrop.addEventListener(
         );
 
 
-      const text =
+      if (!result) {
+
+        throw new Error(
+          "Aucun code détecté."
+        );
+
+      }
+
+
+      const raw =
         result.getText();
 
 
       console.log(
         "Résultat photo :",
-        text
+        raw
       );
 
 
       const isbn =
-        findISBN(text);
+        findISBN(raw);
 
 
-      if (isbn) {
+      if (!isbn) {
 
-        showISBN(isbn);
-
-        cropMessage.textContent =
-          "✓ ISBN trouvé !";
-
-        cropMessage.className =
-          "message success";
-
-      } else {
-
-        cropMessage.textContent =
-          "Le code a été lu, mais ce n'est pas un ISBN reconnu.";
-
-        cropMessage.className =
-          "message error";
+        throw new Error(
+          "Le code détecté n'est pas un ISBN."
+        );
 
       }
+
+
+      /*
+       * Résultat.
+       */
+
+      displayISBN(isbn);
+
+
+      cropStatus.textContent =
+        "✓ ISBN trouvé : " +
+        isbn;
+
+      cropStatus.className =
+        "message success";
 
 
     } catch (error) {
 
       console.error(
-        "Erreur lecture image :",
+        "Erreur lecture photo :",
         error
       );
 
 
-      cropMessage.textContent =
-        "Code non détecté. Recadre plus précisément le code-barres et réessaie.";
+      cropStatus.textContent =
+        "❌ Aucun ISBN détecté. Essaie de recadrer plus précisément le code-barres.";
 
-      cropMessage.className =
+      cropStatus.className =
         "message error";
 
     }
@@ -768,22 +1243,23 @@ readCrop.addEventListener(
     readCrop.disabled = false;
 
     readCrop.textContent =
-      "🔎 Lire le code-barres";
+      "🔎 Lire cette zone";
 
   }
 );
 
 
 /* =========================================================
-   COPIER ISBN
+   COPIE
    ========================================================= */
 
-copyButton.addEventListener(
+copyISBN.addEventListener(
   "click",
   async () => {
 
     const value =
       isbnInput.value.trim();
+
 
     if (!value) {
       return;
@@ -792,9 +1268,8 @@ copyButton.addEventListener(
 
     try {
 
-      await navigator.clipboard.writeText(
-        value
-      );
+      await navigator.clipboard
+        .writeText(value);
 
     } catch {
 
@@ -807,10 +1282,10 @@ copyButton.addEventListener(
     }
 
 
-    resultMessage.textContent =
+    resultStatus.textContent =
       "✓ ISBN copié !";
 
-    resultMessage.className =
+    resultStatus.className =
       "message success";
 
   }
@@ -818,7 +1293,7 @@ copyButton.addEventListener(
 
 
 /* =========================================================
-   SAISIE MANUELLE
+   ISBN MANUEL
    ========================================================= */
 
 isbnInput.addEventListener(
@@ -826,25 +1301,21 @@ isbnInput.addEventListener(
   () => {
 
     const value =
-      clean(isbnInput.value);
+      cleanISBN(
+        isbnInput.value
+      );
 
 
-    /*
-     * Autoriser les recherches
-     * lorsque l'utilisateur a entré
-     * un ISBN-10 ou ISBN-13.
-     */
-
-    const validLength =
+    const usable =
       value.length === 10 ||
       value.length === 13;
 
 
     vintedButton.disabled =
-      !validLength;
+      !usable;
 
     googleButton.disabled =
-      !validLength;
+      !usable;
 
   }
 );
@@ -859,7 +1330,10 @@ vintedButton.addEventListener(
   () => {
 
     const isbn =
-      clean(isbnInput.value);
+      cleanISBN(
+        isbnInput.value
+      );
+
 
     if (!isbn) {
       return;
@@ -889,7 +1363,10 @@ googleButton.addEventListener(
   () => {
 
     const isbn =
-      clean(isbnInput.value);
+      cleanISBN(
+        isbnInput.value
+      );
+
 
     if (!isbn) {
       return;
@@ -911,10 +1388,22 @@ googleButton.addEventListener(
 
 
 /* =========================================================
-   NETTOYAGE
+   CLEANUP
    ========================================================= */
 
 window.addEventListener(
   "beforeunload",
-  stopCamera
+  () => {
+
+    if (stream) {
+
+      stream
+        .getTracks()
+        .forEach(
+          track => track.stop()
+        );
+
+    }
+
+  }
 );
