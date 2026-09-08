@@ -1,14 +1,6 @@
-:root {
-  --green: #007782;
-  --green-dark: #005f68;
-  --background: #f5f5f5;
-  --card: #ffffff;
-  --text: #292929;
-  --muted: #757575;
-  --border: #dddddd;
-  --danger: #d8232f;
-  --success: #16834b;
-}
+/* =========================
+   RESET
+========================= */
 
 * {
   box-sizing: border-box;
@@ -16,35 +8,29 @@
 
 body {
   margin: 0;
-
-  background: var(--background);
-  color: var(--text);
-
   font-family:
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
     Roboto,
+    Helvetica,
     Arial,
     sans-serif;
+
+  background: #f4f5f7;
+  color: #1f2937;
 }
 
-button,
-input {
-  font: inherit;
-}
 
-button {
-  cursor: pointer;
-}
+/* =========================
+   APP
+========================= */
 
 .app {
   width: 100%;
-  max-width: 520px;
-
-  margin: auto;
-
-  padding: 20px 16px 40px;
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 20px 15px 40px;
 }
 
 
@@ -52,23 +38,19 @@ button {
    HEADER
 ========================= */
 
-.header {
+header {
+  text-align: center;
   margin-bottom: 20px;
 }
 
-.header h1 {
-  margin: 0;
-
+header h1 {
+  margin: 0 0 8px;
   font-size: 28px;
-  font-weight: 750;
 }
 
-.header p {
-  margin: 5px 0 0;
-
-  color: var(--muted);
-
-  font-size: 15px;
+header p {
+  margin: 0;
+  color: #6b7280;
 }
 
 
@@ -76,175 +58,63 @@ button {
    CARDS
 ========================= */
 
-.scanner-card,
-.result-card,
-.analysis-card,
-.history-card {
-  background: var(--card);
-
-  border-radius: 16px;
-
-  padding: 16px;
-
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
   margin-bottom: 16px;
 
   box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.05);
+    0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.card h2 {
+  font-size: 19px;
+  margin: 0 0 14px;
 }
 
 
 /* =========================
-   CAMERA
+   SCANNER
 ========================= */
 
-.camera-container {
+.scanner-container {
   position: relative;
-
   width: 100%;
+  aspect-ratio: 4 / 3;
 
-  overflow: hidden;
-
+  background: #111;
   border-radius: 14px;
 
-  background: #000;
+  overflow: hidden;
 }
 
-#camera-video {
-  display: block;
-
+#video {
   width: 100%;
-
-  height: auto;
-
-  min-height: 260px;
+  height: 100%;
 
   object-fit: cover;
 }
 
-.scan-overlay {
+
+/* Cadre de scan */
+
+.scan-frame {
   position: absolute;
 
-  inset: 0;
+  width: 80%;
+  height: 30%;
 
-  display: flex;
+  top: 35%;
+  left: 10%;
 
-  flex-direction: column;
+  border: 3px solid #22c55e;
+  border-radius: 10px;
 
-  justify-content: center;
-
-  align-items: center;
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.35);
 
   pointer-events: none;
-}
-
-.scan-box {
-  position: relative;
-
-  width: 85%;
-
-  height: 110px;
-
-  border:
-    2px solid white;
-
-  border-radius: 8px;
-
-  box-shadow:
-    0 0 0 9999px
-    rgba(0, 0, 0, 0.30);
-}
-
-.scan-line {
-  position: absolute;
-
-  left: 5%;
-  right: 5%;
-
-  top: 50%;
-
-  height: 2px;
-
-  background: #ff375f;
-
-  box-shadow:
-    0 0 8px #ff375f;
-
-  animation:
-    scanLine 1.8s ease-in-out infinite;
-}
-
-@keyframes scanLine {
-
-  0% {
-    top: 10%;
-  }
-
-  50% {
-    top: 90%;
-  }
-
-  100% {
-    top: 10%;
-  }
-}
-
-.scan-overlay p {
-  margin-top: 18px;
-
-  padding: 7px 12px;
-
-  border-radius: 20px;
-
-  background:
-    rgba(0, 0, 0, 0.65);
-
-  color: white;
-
-  font-size: 13px;
-}
-
-
-/* =========================
-   PLACEHOLDER
-========================= */
-
-.scanner-placeholder {
-  height: 250px;
-
-  border:
-    2px dashed var(--border);
-
-  border-radius: 12px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-
-  align-items: center;
-
-  text-align: center;
-
-  color: var(--muted);
-}
-
-.scanner-placeholder strong {
-  color: var(--text);
-
-  font-size: 17px;
-}
-
-.scanner-placeholder p {
-  margin: 7px 0 0;
-
-  font-size: 14px;
-}
-
-.camera-icon {
-  font-size: 52px;
-
-  margin-bottom: 10px;
 }
 
 
@@ -252,64 +122,94 @@ button {
    BUTTONS
 ========================= */
 
-.primary-button,
-.secondary-button,
-.capture-button,
-.vinted-button {
+button,
+.upload-button {
+  border: none;
+  border-radius: 12px;
 
-  width: 100%;
+  padding: 13px 16px;
 
-  min-height: 52px;
+  font-size: 16px;
+  font-weight: 600;
 
-  border: 0;
+  cursor: pointer;
 
-  border-radius: 10px;
+  transition:
+    transform 0.1s,
+    opacity 0.2s;
+}
 
-  font-weight: 700;
+button:active,
+.upload-button:active {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
 
   margin-top: 12px;
 }
 
-.primary-button,
-.vinted-button {
+.buttons button {
+  flex: 1;
+}
 
-  background: var(--green);
-
+.primary {
+  background: #2563eb;
   color: white;
 }
 
-.primary-button:active,
-.vinted-button:active {
-
-  background: var(--green-dark);
+.secondary {
+  background: #e5e7eb;
+  color: #111827;
 }
 
-.secondary-button {
 
-  background: #eeeeee;
+/* =========================
+   UPLOAD
+========================= */
 
-  color: var(--text);
-}
+.upload-button {
+  display: block;
 
-.capture-button {
+  width: 100%;
 
-  background: #ff375f;
+  text-align: center;
 
+  background: #111827;
   color: white;
-
-  font-size: 16px;
 }
 
-.vinted-button {
-
-  font-size: 16px;
+#imageInput {
+  display: none;
 }
 
-.vinted-button:disabled {
 
-  opacity: 0.4;
+/* =========================
+   CROP
+========================= */
 
-  cursor: not-allowed;
+.crop-container {
+  width: 100%;
+  max-height: 500px;
+
+  overflow: hidden;
+
+  border-radius: 12px;
+  background: #111;
+
+  margin-bottom: 14px;
+}
+
+#cropImage {
+  display: block;
+  max-width: 100%;
 }
 
 
@@ -317,230 +217,89 @@ button {
    ISBN
 ========================= */
 
-.result-card label {
-
-  display: block;
-
-  margin-bottom: 7px;
-
-  font-size: 14px;
-
-  font-weight: 700;
-}
-
 .isbn-row {
-
-  position: relative;
+  display: flex;
+  gap: 8px;
 }
 
-#isbn {
+#isbnInput {
+  flex: 1;
 
-  width: 100%;
+  min-width: 0;
 
-  height: 52px;
+  padding: 14px;
 
-  padding:
-    0 45px
-    0 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
 
-  border:
-    1px solid var(--border);
-
-  border-radius: 10px;
+  font-size: 18px;
 
   outline: none;
-
-  font-size: 18px;
-
-  letter-spacing: .5px;
 }
 
-#isbn:focus {
-
-  border-color:
-    var(--green);
-
-  box-shadow:
-    0 0 0 2px
-    rgba(0, 119, 130, .12);
+#isbnInput:focus {
+  border-color: #2563eb;
 }
 
-.clear-button {
+#copyButton {
+  width: 52px;
 
-  position: absolute;
-
-  right: 7px;
-  top: 7px;
-
-  width: 38px;
-  height: 38px;
-
-  border: 0;
-
-  border-radius: 50%;
-
-  background: #eeeeee;
-
-  font-size: 24px;
+  background: #e5e7eb;
 }
+
+
+/* =========================
+   SEARCH BUTTONS
+========================= */
+
+.search-buttons {
+  display: grid;
+  gap: 10px;
+
+  margin-top: 15px;
+}
+
+.vinted {
+  background: #007782;
+  color: white;
+}
+
+.google {
+  background: #4285f4;
+  color: white;
+}
+
+
+/* =========================
+   STATUS
+========================= */
 
 .status {
+  min-height: 20px;
 
-  min-height: 18px;
-
-  margin: 7px 2px 0;
-
-  font-size: 13px;
-
-  color: var(--muted);
-}
-
-.status.valid {
-
-  color: var(--success);
-}
-
-.status.invalid {
-
-  color: var(--danger);
-}
-
-
-/* =========================
-   ANALYSIS
-========================= */
-
-.analysis-card {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 14px;
-}
-
-.analysis-card p {
-
-  margin: 4px 0 0;
-
-  color: var(--muted);
-
-  font-size: 13px;
-}
-
-.spinner {
-
-  width: 30px;
-  height: 30px;
-
-  flex-shrink: 0;
-
-  border:
-    3px solid #e5e5e5;
-
-  border-top-color:
-    var(--green);
-
-  border-radius: 50%;
-
-  animation:
-    spin .8s linear infinite;
-}
-
-@keyframes spin {
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-
-/* =========================
-   HISTORY
-========================= */
-
-.section-title {
-
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: center;
-}
-
-.section-title h2 {
-
-  margin: 0;
-
-  font-size: 18px;
-}
-
-.section-title button {
-
-  border: 0;
-
-  background: transparent;
-
-  color: var(--green);
-
-  font-size: 13px;
-
-  font-weight: 700;
-}
-
-.history-list {
-
-  margin-top: 12px;
-}
-
-.history-item {
-
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: center;
-
-  padding: 12px 0;
-
-  border-top:
-    1px solid #eeeeee;
-}
-
-.history-isbn {
-
-  font-size: 15px;
-
-  font-weight: 600;
-}
-
-.history-search {
-
-  border: 0;
-
-  border-radius: 8px;
-
-  padding:
-    8px 11px;
-
-  background:
-    #e7f5f6;
-
-  color:
-    var(--green);
-
-  font-size: 13px;
-
-  font-weight: 700;
-}
-
-.empty-history {
-
-  margin: 12px 0 0;
-
-  color: var(--muted);
+  margin: 10px 0 0;
 
   font-size: 14px;
+  color: #6b7280;
+}
+
+.status.success {
+  color: #16a34a;
+}
+
+.status.error {
+  color: #dc2626;
+}
+
+
+/* =========================
+   HELP
+========================= */
+
+.help {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 
@@ -549,21 +308,37 @@ button {
 ========================= */
 
 footer {
-
-  padding-top: 10px;
-
   text-align: center;
 
-  color: #999;
+  color: #9ca3af;
 
   font-size: 12px;
+
+  padding-top: 5px;
 }
 
 
 /* =========================
-   UTILITIES
+   UTILITY
 ========================= */
 
 .hidden {
   display: none !important;
+}
+
+
+/* =========================
+   DESKTOP
+========================= */
+
+@media (min-width: 700px) {
+
+  .app {
+    padding-top: 40px;
+  }
+
+  .scanner-container {
+    aspect-ratio: 16 / 10;
+  }
+
 }
