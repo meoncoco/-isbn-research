@@ -5,92 +5,190 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <meta name="theme-color" content="#007782" />
-  <meta name="description" content="Scanner un ISBN et rechercher automatiquement sur Vinted." />
+  <meta
+    name="description"
+    content="Scanner un ISBN et rechercher automatiquement sur Vinted."
+  />
 
-  <title>ISBN → Vinted</title>
+  <title>ISBN Research</title>
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Scanner code-barres / QR -->
-  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <!-- Scanner code-barres -->
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    defer>
+  </script>
+
+  <!-- OCR -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
+    defer>
+  </script>
+
   <script src="app.js" defer></script>
 </head>
 
 <body>
 
-  <main class="app">
+<main class="app">
 
-    <header class="header">
-      <div>
-        <h1>ISBN → Vinted</h1>
-        <p>Scanne le code-barres d'un livre</p>
-      </div>
-    </header>
+  <header class="header">
+    <div>
+      <h1>ISBN Research</h1>
+      <p>Scanne un livre pour trouver ses annonces</p>
+    </div>
+  </header>
 
-    <section class="scanner-card">
 
-      <div id="reader"></div>
+  <!-- =========================
+       SCANNER
+  ========================== -->
 
-      <div id="scanner-placeholder" class="scanner-placeholder">
-        <div class="camera-icon">📷</div>
-        <p>La caméra n'est pas encore activée</p>
-      </div>
+  <section class="scanner-card">
 
-      <button id="start-scanner" class="primary-button">
-        📷 Scanner un livre
+    <div id="reader"></div>
+
+    <div id="scanner-placeholder" class="scanner-placeholder">
+      <div class="camera-icon">📚</div>
+
+      <strong>Scanner un livre</strong>
+
+      <p>
+        Scanne le code-barres ou prends une photo
+      </p>
+    </div>
+
+
+    <button
+      id="start-scanner"
+      class="primary-button">
+      📷 Scanner avec la caméra
+    </button>
+
+
+    <button
+      id="photo-button"
+      class="secondary-button">
+      📸 Prendre une photo
+    </button>
+
+
+    <button
+      id="stop-scanner"
+      class="secondary-button hidden">
+      ✕ Arrêter le scanner
+    </button>
+
+
+    <!-- Input caméra/photo natif -->
+    <input
+      id="photo-input"
+      type="file"
+      accept="image/*"
+      capture="environment"
+      hidden
+    />
+
+  </section>
+
+
+  <!-- =========================
+       ANALYSE
+  ========================== -->
+
+  <section
+    id="analysis-card"
+    class="analysis-card hidden">
+
+    <div class="spinner"></div>
+
+    <strong id="analysis-title">
+      Analyse de l'image...
+    </strong>
+
+    <p id="analysis-text">
+      Recherche du code-barres et de l'ISBN.
+    </p>
+
+  </section>
+
+
+  <!-- =========================
+       RESULTAT
+  ========================== -->
+
+  <section class="result-card">
+
+    <label for="isbn">
+      ISBN
+    </label>
+
+    <div class="isbn-row">
+
+      <input
+        id="isbn"
+        type="text"
+        inputmode="numeric"
+        autocomplete="off"
+        placeholder="978XXXXXXXXXX"
+        maxlength="17"
+      />
+
+      <button
+        id="clear-isbn"
+        class="clear-button"
+        aria-label="Effacer">
+        ×
       </button>
 
-      <button id="stop-scanner" class="secondary-button hidden">
-        ✕ Arrêter le scanner
+    </div>
+
+    <p
+      id="isbn-status"
+      class="status">
+    </p>
+
+
+    <button
+      id="vinted-search"
+      class="vinted-button"
+      disabled>
+      🔎 Rechercher sur Vinted
+    </button>
+
+  </section>
+
+
+  <!-- =========================
+       HISTORIQUE
+  ========================== -->
+
+  <section class="history-card">
+
+    <div class="section-title">
+
+      <h2>Derniers scans</h2>
+
+      <button id="clear-history">
+        Effacer
       </button>
 
-    </section>
+    </div>
 
-    <section class="result-card">
+    <div
+      id="history"
+      class="history-list">
+    </div>
 
-      <label for="isbn">ISBN</label>
+  </section>
 
-      <div class="isbn-row">
-        <input
-          id="isbn"
-          type="text"
-          inputmode="numeric"
-          autocomplete="off"
-          placeholder="978XXXXXXXXXX"
-          maxlength="17"
-        />
 
-        <button id="clear-isbn" class="clear-button" aria-label="Effacer">
-          ×
-        </button>
-      </div>
+  <footer>
+    ISBN Research · Application personnelle
+  </footer>
 
-      <p id="isbn-status" class="status"></p>
-
-      <button id="vinted-search" class="vinted-button">
-        🔎 Rechercher sur Vinted
-      </button>
-
-    </section>
-
-    <section class="history-card">
-
-      <div class="section-title">
-        <h2>Derniers scans</h2>
-        <button id="clear-history">Effacer</button>
-      </div>
-
-      <div id="history" class="history-list">
-        <p class="empty-history">Aucun scan pour le moment.</p>
-      </div>
-
-    </section>
-
-    <footer>
-      <p>ISBN Scanner · Application personnelle</p>
-    </footer>
-
-  </main>
+</main>
 
 </body>
 </html>
