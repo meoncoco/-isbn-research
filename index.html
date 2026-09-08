@@ -1,143 +1,198 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>ISBN Scanner</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
 
-  <link rel="stylesheet" href="style.css">
+  <title>Research - ISBN Scanner</title>
 
-  <!-- ZXing : lecture des codes-barres -->
-  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
-
-  <!-- Cropper.js : recadrage des photos -->
+  <!-- Cropper.js -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"
   >
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+  <!-- ZXing -->
+  <script
+    src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js">
+  </script>
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js">
+  </script>
+
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
   <main class="app">
 
-    <header>
-      <h1>📚 ISBN Scanner</h1>
-      <p>Scanne un livre pour comparer rapidement son prix.</p>
+    <header class="header">
+      <h1>📚 Research</h1>
+      <p>Scanner un livre pour retrouver son ISBN</p>
     </header>
 
-    <!-- ========================= -->
-    <!-- SCAN CAMÉRA -->
-    <!-- ========================= -->
+
+    <!-- =========================
+         SCANNER
+    ========================== -->
 
     <section class="card">
 
-      <h2>1. Scanner</h2>
+      <h2>1. Scanner le code-barres</h2>
 
-      <div class="scanner-container">
-        <video id="video" autoplay muted playsinline></video>
+      <div class="scanner">
 
-        <div class="scan-frame"></div>
+        <video
+          id="video"
+          autoplay
+          muted
+          playsinline>
+        </video>
+
+        <div class="scanner-overlay">
+          <div class="scanner-frame">
+            <div class="scanner-line"></div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="buttons">
+      <button
+        id="startScan"
+        class="button primary">
+        📷 Démarrer le scanner
+      </button>
 
-        <button id="startCamera" class="primary">
-          📷 Démarrer le scanner
-        </button>
+      <button
+        id="stopScan"
+        class="button secondary hidden">
+        ⏹ Arrêter le scanner
+      </button>
 
-        <button id="stopCamera" class="secondary hidden">
-          ⏹ Arrêter
-        </button>
-
-      </div>
-
-      <p id="cameraStatus" class="status"></p>
+      <p
+        id="scanMessage"
+        class="message">
+      </p>
 
     </section>
 
 
-    <!-- ========================= -->
-    <!-- PHOTO -->
-    <!-- ========================= -->
+    <!-- =========================
+         PHOTO
+    ========================== -->
 
     <section class="card">
 
-      <h2>Ou utiliser une photo</h2>
+      <h2>Ou prendre une photo</h2>
 
-      <label for="imageInput" class="upload-button">
-        📸 Prendre une photo / choisir une image
+      <p class="help">
+        Prends une photo du dos du livre. Tu pourras ensuite
+        sélectionner précisément le code-barres.
+      </p>
+
+      <label
+        for="photoInput"
+        class="button photo-button">
+        📸 Prendre une photo
       </label>
 
       <input
+        id="photoInput"
         type="file"
-        id="imageInput"
         accept="image/*"
-        capture="environment"
-      >
+        capture="environment">
 
     </section>
 
 
-    <!-- ========================= -->
-    <!-- RECADRAGE -->
-    <!-- ========================= -->
+    <!-- =========================
+         RECADRAGE
+    ========================== -->
 
-    <section id="cropSection" class="card hidden">
+    <section
+      id="cropCard"
+      class="card hidden">
 
-      <h2>2. Recadrer</h2>
+      <h2>2. Recadrer l'image</h2>
 
       <p class="help">
-        Sélectionne uniquement la zone contenant le code-barres.
-        Évite autant que possible le prix et les autres textes.
+        👆 Déplace et redimensionne la zone pour sélectionner
+        uniquement le code-barres et ses chiffres.
       </p>
 
-      <div class="crop-container">
-        <img id="cropImage" alt="Image à recadrer">
+      <div class="crop-wrapper">
+
+        <img
+          id="cropImage"
+          alt="Photo à recadrer">
+
       </div>
 
-      <button id="scanCrop" class="primary">
+      <button
+        id="readCrop"
+        class="button primary">
         🔎 Lire le code-barres
       </button>
 
+      <p
+        id="cropMessage"
+        class="message">
+      </p>
+
     </section>
 
 
-    <!-- ========================= -->
-    <!-- RÉSULTAT -->
-    <!-- ========================= -->
+    <!-- =========================
+         RESULTAT
+    ========================== -->
 
-    <section class="card result-card">
+    <section class="card">
 
       <h2>3. ISBN</h2>
 
-      <div class="isbn-row">
+      <div class="isbn-container">
 
         <input
+          id="isbn"
           type="text"
-          id="isbnInput"
-          placeholder="ISBN..."
           inputmode="numeric"
-          autocomplete="off"
-        >
+          placeholder="ISBN..."
+          autocomplete="off">
 
-        <button id="copyButton" title="Copier">
+        <button
+          id="copy"
+          class="copy-button">
           📋
         </button>
 
       </div>
 
-      <p id="resultStatus" class="status"></p>
+      <p
+        id="resultMessage"
+        class="message">
+      </p>
+
 
       <div class="search-buttons">
 
-        <button id="vintedButton" class="vinted" disabled>
+        <button
+          id="vinted"
+          class="button vinted"
+          disabled>
           🟢 Rechercher sur Vinted
         </button>
 
-        <button id="googleButton" class="google" disabled>
+        <button
+          id="google"
+          class="button google"
+          disabled>
           🔵 Rechercher sur Google
         </button>
 
@@ -147,14 +202,15 @@
 
 
     <footer>
-      <p>
-        Les recherches sont effectuées directement dans ton navigateur.
-      </p>
+      L'image reste dans ton navigateur et n'est pas envoyée
+      à un serveur par cette application.
     </footer>
 
   </main>
 
+
   <script src="script.js"></script>
 
 </body>
+
 </html>
