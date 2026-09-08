@@ -1,13 +1,17 @@
-/* =========================
-   RESET
-========================= */
-
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f3f4f6;
+  color: #111827;
+
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -16,21 +20,23 @@ body {
     Helvetica,
     Arial,
     sans-serif;
-
-  background: #f4f5f7;
-  color: #1f2937;
 }
 
 
 /* =========================
-   APP
+   APPLICATION
 ========================= */
 
 .app {
   width: 100%;
   max-width: 650px;
-  margin: 0 auto;
-  padding: 20px 15px 40px;
+
+  margin: auto;
+
+  padding:
+    20px
+    15px
+    40px;
 }
 
 
@@ -38,18 +44,21 @@ body {
    HEADER
 ========================= */
 
-header {
+.header {
   text-align: center;
+
   margin-bottom: 20px;
 }
 
-header h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
+.header h1 {
+  margin: 0;
+
+  font-size: 30px;
 }
 
-header p {
-  margin: 0;
+.header p {
+  margin-top: 7px;
+
   color: #6b7280;
 }
 
@@ -60,17 +69,21 @@ header p {
 
 .card {
   background: white;
+
   border-radius: 18px;
+
   padding: 18px;
+
   margin-bottom: 16px;
 
   box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.06);
+    0 3px 15px rgba(0, 0, 0, 0.06);
 }
 
 .card h2 {
+  margin-top: 0;
+
   font-size: 19px;
-  margin: 0 0 14px;
 }
 
 
@@ -78,15 +91,18 @@ header p {
    SCANNER
 ========================= */
 
-.scanner-container {
+.scanner {
   position: relative;
+
   width: 100%;
+
   aspect-ratio: 4 / 3;
 
-  background: #111;
+  overflow: hidden;
+
   border-radius: 14px;
 
-  overflow: hidden;
+  background: #111;
 }
 
 #video {
@@ -97,96 +113,143 @@ header p {
 }
 
 
-/* Cadre de scan */
+/* Overlay */
 
-.scan-frame {
+.scanner-overlay {
   position: absolute;
 
-  width: 80%;
-  height: 30%;
+  inset: 0;
 
-  top: 35%;
-  left: 10%;
+  display: flex;
 
-  border: 3px solid #22c55e;
-  border-radius: 10px;
-
-  box-shadow:
-    0 0 0 9999px rgba(0, 0, 0, 0.35);
+  justify-content: center;
+  align-items: center;
 
   pointer-events: none;
 }
 
 
-/* =========================
-   BUTTONS
-========================= */
+/* Zone de scan */
 
-button,
-.upload-button {
-  border: none;
+.scanner-frame {
+  position: relative;
+
+  width: 85%;
+  height: 32%;
+
+  border:
+    3px solid
+    #22c55e;
+
   border-radius: 12px;
 
-  padding: 13px 16px;
+  box-shadow:
+    0 0 0 9999px
+    rgba(0, 0, 0, 0.4);
+
+  overflow: hidden;
+}
+
+
+/* Ligne animée */
+
+.scanner-line {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+
+  height: 3px;
+
+  background: #22c55e;
+
+  animation:
+    scanLine 2s infinite;
+}
+
+@keyframes scanLine {
+
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 100%;
+  }
+
+  100% {
+    top: 0;
+  }
+
+}
+
+
+/* =========================
+   BOUTONS
+========================= */
+
+.button {
+  width: 100%;
+
+  border: none;
+
+  border-radius: 12px;
+
+  padding: 14px;
+
+  margin-top: 12px;
 
   font-size: 16px;
+
   font-weight: 600;
 
   cursor: pointer;
 
   transition:
-    transform 0.1s,
-    opacity 0.2s;
+    transform .1s,
+    opacity .2s;
 }
 
-button:active,
-.upload-button:active {
-  transform: scale(0.97);
+.button:active {
+  transform: scale(.98);
 }
 
-button:disabled {
-  opacity: 0.45;
+.button:disabled {
+  opacity: .4;
+
   cursor: not-allowed;
 }
 
-.buttons {
-  display: flex;
-  gap: 10px;
-
-  margin-top: 12px;
-}
-
-.buttons button {
-  flex: 1;
-}
 
 .primary {
   background: #2563eb;
+
   color: white;
 }
 
 .secondary {
   background: #e5e7eb;
+
   color: #111827;
 }
 
 
-/* =========================
-   UPLOAD
-========================= */
-
-.upload-button {
+.photo-button {
   display: block;
-
-  width: 100%;
 
   text-align: center;
 
   background: #111827;
+
   color: white;
 }
 
-#imageInput {
+
+/* =========================
+   INPUT FILE
+========================= */
+
+#photoInput {
   display: none;
 }
 
@@ -195,21 +258,36 @@ button:disabled {
    CROP
 ========================= */
 
-.crop-container {
+.crop-wrapper {
   width: 100%;
+
   max-height: 500px;
 
   overflow: hidden;
 
-  border-radius: 12px;
   background: #111;
 
-  margin-bottom: 14px;
+  border-radius: 12px;
+
+  margin-top: 15px;
+
+  margin-bottom: 15px;
 }
 
 #cropImage {
   display: block;
+
   max-width: 100%;
+}
+
+
+/*
+ * Important pour Cropper.js
+ * sur mobile.
+ */
+
+.cropper-container {
+  width: 100% !important;
 }
 
 
@@ -217,43 +295,56 @@ button:disabled {
    ISBN
 ========================= */
 
-.isbn-row {
+.isbn-container {
   display: flex;
+
   gap: 8px;
 }
 
-#isbnInput {
+#isbn {
   flex: 1;
 
   min-width: 0;
 
-  padding: 14px;
+  border:
+    2px solid
+    #e5e7eb;
 
-  border: 2px solid #e5e7eb;
   border-radius: 12px;
+
+  padding: 14px;
 
   font-size: 18px;
 
   outline: none;
 }
 
-#isbnInput:focus {
+#isbn:focus {
   border-color: #2563eb;
 }
 
-#copyButton {
-  width: 52px;
+.copy-button {
+  width: 54px;
+
+  border: none;
+
+  border-radius: 12px;
 
   background: #e5e7eb;
+
+  font-size: 20px;
+
+  cursor: pointer;
 }
 
 
 /* =========================
-   SEARCH BUTTONS
+   RECHERCHE
 ========================= */
 
 .search-buttons {
   display: grid;
+
   gap: 10px;
 
   margin-top: 15px;
@@ -261,44 +352,49 @@ button:disabled {
 
 .vinted {
   background: #007782;
+
   color: white;
 }
 
 .google {
   background: #4285f4;
+
   color: white;
 }
 
 
 /* =========================
-   STATUS
+   MESSAGES
 ========================= */
 
-.status {
+.message {
   min-height: 20px;
 
   margin: 10px 0 0;
 
   font-size: 14px;
+
   color: #6b7280;
 }
 
-.status.success {
+.message.success {
   color: #16a34a;
 }
 
-.status.error {
+.message.error {
   color: #dc2626;
 }
 
 
 /* =========================
-   HELP
+   AIDE
 ========================= */
 
 .help {
   color: #6b7280;
+
   font-size: 14px;
+
   line-height: 1.5;
 }
 
@@ -314,12 +410,12 @@ footer {
 
   font-size: 12px;
 
-  padding-top: 5px;
+  padding: 10px;
 }
 
 
 /* =========================
-   UTILITY
+   UTILITAIRE
 ========================= */
 
 .hidden {
@@ -337,7 +433,7 @@ footer {
     padding-top: 40px;
   }
 
-  .scanner-container {
+  .scanner {
     aspect-ratio: 16 / 10;
   }
 
