@@ -1,322 +1,181 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
-  <meta charset="UTF-8">
-
+  <meta charset="UTF-8" />
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  >
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#111827" />
 
-  <title>Research — ISBN Scanner</title>
+  <title>ISBN Research</title>
 
+  <link rel="stylesheet" href="./style.css" />
 
-  <!-- Cropper.js -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"
-  >
-
-  <!-- ZXing -->
+  <!-- Barcode / QR reader -->
   <script
-    src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js">
-  </script>
+    src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"
+    defer
+  ></script>
 
+  <!-- OCR fallback -->
   <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js">
-  </script>
-
-
-  <link rel="stylesheet" href="style.css">
-
+    src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
+    defer
+  ></script>
 </head>
 
-
 <body>
-
   <main class="app">
 
-
-    <!-- =========================
-         HEADER
-    ========================== -->
-
     <header class="header">
-
-      <div class="logo">
-        📚
+      <div>
+        <h1>ISBN Research</h1>
+        <p>Scanner rapidement un livre et comparer son prix.</p>
       </div>
-
-      <h1>Research</h1>
-
-      <p>
-        Scanner un livre pour retrouver son ISBN
-      </p>
-
     </header>
 
-
-    <!-- =========================
-         CAMERA
-    ========================== -->
-
+    <!-- CAMERA -->
     <section class="card">
+      <div class="section-title">
+        <h2>1. Scanner</h2>
+        <span id="cameraStatus" class="status">Caméra inactive</span>
+      </div>
 
-      <h2>📷 Scanner le code-barres</h2>
-
-      <div class="scanner">
-
+      <div class="camera-wrapper">
         <video
-          id="video"
+          id="camera"
           autoplay
+          playsinline
           muted
-          playsinline>
-        </video>
+        ></video>
 
+        <div id="cameraOverlay" class="camera-overlay">
+          <div class="scan-frame">
+            <div class="corner top-left"></div>
+            <div class="corner top-right"></div>
+            <div class="corner bottom-left"></div>
+            <div class="corner bottom-right"></div>
 
-        <!-- Message affiché lorsque la caméra
-             n'est pas encore active -->
-
-        <div
-          id="cameraPlaceholder"
-          class="camera-placeholder">
-
-          <div class="camera-icon">
-            📷
+            <div class="scan-line"></div>
           </div>
 
-          <div>
-            Appuie sur « Démarrer le scanner »
-          </div>
-
+          <p>Place le code-barres dans cette zone</p>
         </div>
-
-
-        <!-- Cadre -->
-
-        <div
-          id="scannerOverlay"
-          class="scanner-overlay hidden">
-
-          <div class="scanner-frame">
-
-            <div class="scanner-line"></div>
-
-          </div>
-
-        </div>
-
       </div>
 
+      <div class="camera-actions">
+        <button id="startCamera" class="button primary">
+          📷 Ouvrir la caméra
+        </button>
 
-      <button
-        id="startCamera"
-        class="button primary">
+        <button id="takePhoto" class="button success" disabled>
+          📸 Prendre la photo
+        </button>
 
-        📷 Démarrer le scanner
-
-      </button>
-
-
-      <button
-        id="stopCamera"
-        class="button secondary hidden">
-
-        ⏹ Arrêter
-
-      </button>
-
-
-      <div
-        id="cameraStatus"
-        class="diagnostic">
-
-        Caméra inactive
-
+        <button id="stopCamera" class="button secondary" disabled>
+          Arrêter
+        </button>
       </div>
 
-
+      <p id="cameraError" class="error"></p>
     </section>
 
 
-    <!-- =========================
-         PHOTO
-    ========================== -->
+    <!-- PHOTO / CROP -->
+    <section id="cropSection" class="card hidden">
 
+      <div class="section-title">
+        <h2>2. Recadrer le code-barres</h2>
+        <span class="hint">Glisse sur l'image</span>
+      </div>
+
+      <div id="cropContainer" class="crop-container">
+        <img id="capturedImage" alt="Photo du livre" />
+
+        <div id="selection" class="selection hidden">
+          <div class="selection-handle tl"></div>
+          <div class="selection-handle tr"></div>
+          <div class="selection-handle bl"></div>
+          <div class="selection-handle br"></div>
+        </div>
+      </div>
+
+      <div class="crop-actions">
+        <button id="resetCrop" class="button secondary">
+          ↻ Réinitialiser
+        </button>
+
+        <button id="scanCrop" class="button primary">
+          🔎 Lire le code-barres
+        </button>
+      </div>
+
+      <p class="crop-tip">
+        Conseil : recadre assez largement autour du code-barres, en gardant
+        les chiffres sous les barres.
+      </p>
+    </section>
+
+
+    <!-- RESULT -->
     <section class="card">
 
-      <h2>📸 Ou utiliser une photo</h2>
-
-      <p class="help">
-
-        Prends une photo du dos du livre.
-        Tu pourras ensuite sélectionner précisément
-        le code-barres.
-
-      </p>
-
-
-      <label
-        for="photoInput"
-        class="button photo-button">
-
-        📸 Prendre une photo
-
-      </label>
-
-
-      <input
-        id="photoInput"
-        type="file"
-        accept="image/*"
-        capture="environment"
-      >
-
-    </section>
-
-
-    <!-- =========================
-         CROP
-    ========================== -->
-
-    <section
-      id="cropCard"
-      class="card hidden">
-
-      <h2>✂️ Recadrer la photo</h2>
-
-
-      <div class="crop-instructions">
-
-        <strong>
-          Sélectionne le code-barres
-        </strong>
-
-        <br>
-
-        Déplace la zone avec le doigt et utilise
-        les coins pour l'agrandir ou la réduire.
-
+      <div class="section-title">
+        <h2>3. ISBN</h2>
+        <span id="scanStatus" class="status">En attente</span>
       </div>
-
-
-      <div
-        id="cropContainer"
-        class="crop-container">
-
-        <img
-          id="cropImage"
-          alt="Photo du livre">
-
-      </div>
-
-
-      <button
-        id="readCrop"
-        class="button primary">
-
-        🔎 Lire cette zone
-
-      </button>
-
-
-      <button
-        id="newPhoto"
-        class="button secondary">
-
-        📸 Choisir une autre photo
-
-      </button>
-
-
-      <p
-        id="cropStatus"
-        class="message">
-      </p>
-
-    </section>
-
-
-    <!-- =========================
-         RESULTAT
-    ========================== -->
-
-    <section class="card">
-
-      <h2>🔢 ISBN</h2>
-
 
       <div class="isbn-row">
-
         <input
           id="isbn"
           type="text"
           inputmode="numeric"
-          placeholder="ISBN..."
           autocomplete="off"
-        >
+          placeholder="978XXXXXXXXXX"
+          maxlength="17"
+        />
 
-
-        <button
-          id="copyISBN"
-          class="copy-button"
-          title="Copier l'ISBN">
-
-          📋
-
+        <button id="copyIsbn" class="button secondary">
+          Copier
         </button>
-
       </div>
 
-
-      <p
-        id="resultStatus"
-        class="message">
-      </p>
-
+      <p id="resultMessage" class="result-message"></p>
 
       <div class="search-buttons">
 
-        <button
+        <a
           id="vintedButton"
-          class="button vinted"
-          disabled>
-
+          class="button vinted disabled"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           🟢 Rechercher sur Vinted
+        </a>
 
-        </button>
-
-
-        <button
+        <a
           id="googleButton"
-          class="button google"
-          disabled>
-
-          🔵 Rechercher sur Google
-
-        </button>
+          class="button google disabled"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          🔍 Rechercher sur Google
+        </a>
 
       </div>
-
     </section>
 
 
-    <footer>
+    <!-- Hidden processing elements -->
+    <canvas id="captureCanvas" class="hidden"></canvas>
 
-      <p>
-        Les images sont traitées directement dans ton navigateur.
-      </p>
-
-    </footer>
-
+    <div id="scanner" class="hidden"></div>
 
   </main>
 
-
-  <script src="script.js"></script>
-
+  <script src="./app.js"></script>
 </body>
-
 </html>
