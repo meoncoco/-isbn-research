@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -8,9 +10,13 @@
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   >
 
-  <meta name="theme-color" content="#007782">
+  <meta
+    name="theme-color"
+    content="#007782"
+  >
 
   <title>ISBN Research</title>
+
 
   <style>
 
@@ -19,7 +25,9 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+
     body {
+
       margin: 0;
 
       min-height: 100vh;
@@ -32,48 +40,60 @@
         sans-serif;
 
       background: #f4f4f4;
+
       color: #222;
 
       display: flex;
+
       justify-content: center;
+
       align-items: center;
 
       padding:
-        max(20px, env(safe-area-inset-top))
-        20px
-        max(20px, env(safe-area-inset-bottom));
+        max(18px, env(safe-area-inset-top))
+        18px
+        max(18px, env(safe-area-inset-bottom));
     }
 
+
     .app {
+
       width: 100%;
+
       max-width: 430px;
 
       background: white;
 
       border-radius: 24px;
 
-      padding: 28px 22px;
+      padding: 26px 20px;
 
       box-shadow:
-        0 10px 40px rgba(0, 0, 0, .08);
+        0 10px 40px rgba(0,0,0,.08);
 
       text-align: center;
     }
 
+
     .logo {
-      font-size: 52px;
-      margin-bottom: 8px;
+
+      font-size: 48px;
+
+      margin-bottom: 5px;
     }
+
 
     h1 {
+
       margin: 0;
 
-      font-size: 28px;
-      font-weight: 700;
+      font-size: 27px;
     }
 
+
     .subtitle {
-      margin: 8px 0 22px;
+
+      margin: 7px 0 20px;
 
       color: #777;
 
@@ -81,9 +101,9 @@
     }
 
 
-    /* ================================================
+    /* =========================================
        CAMÉRA
-       ================================================ */
+       ========================================= */
 
     #cameraContainer {
 
@@ -98,9 +118,8 @@
       border-radius: 18px;
 
       background: #111;
-
-      margin-bottom: 12px;
     }
+
 
     #video {
 
@@ -108,7 +127,7 @@
 
       width: 100%;
 
-      height: 300px;
+      height: 330px;
 
       object-fit: cover;
 
@@ -117,84 +136,236 @@
 
 
     /*
-     * Zone de visée.
+     * Zone de scan.
      *
-     * IMPORTANT :
-     * on prend une zone assez large verticalement.
-     * Le recadrage réel sera effectué après la capture.
+     * Beaucoup plus petite que dans la V4.
+     *
+     * Le but est de rapprocher visuellement
+     * le code-barres sans devoir rapprocher
+     * physiquement le téléphone.
      */
 
     .scan-frame {
 
       position: absolute;
 
-      left: 5%;
-      right: 5%;
+      left: 8%;
 
-      top: 30%;
+      right: 8%;
 
-      height: 40%;
+      top: 38%;
 
-      border: 3px solid #00a88f;
+      height: 24%;
+
+      border: 3px solid #00b89c;
 
       border-radius: 10px;
 
       box-shadow:
-        0 0 0 9999px rgba(0, 0, 0, .25);
+        0 0 0 9999px rgba(0,0,0,.32);
 
       pointer-events: none;
     }
 
-    .scan-line {
+
+    .scan-frame::after {
+
+      content: "";
 
       position: absolute;
 
-      left: 3%;
-      right: 3%;
+      left: 10%;
+
+      right: 10%;
 
       top: 50%;
 
       height: 2px;
 
-      background: #00d1b2;
+      background: #00e0bd;
 
       box-shadow:
-        0 0 8px #00d1b2;
+        0 0 10px #00e0bd;
 
       animation:
-        scanLine 1.8s ease-in-out infinite;
+        scanLine 1.4s ease-in-out infinite;
     }
+
 
     @keyframes scanLine {
 
       0%,
       100% {
-        transform: translateY(-45px);
+        transform: translateY(-35px);
       }
 
       50% {
-        transform: translateY(45px);
+        transform: translateY(35px);
       }
     }
 
 
-    .camera-hint {
+    /* =========================================
+       INDICATEUR DE RECHERCHE
+       ========================================= */
+
+    .scanning-indicator {
 
       display: none;
 
-      margin: 10px 0 15px;
+      margin-top: 12px;
 
-      color: #666;
+      color: #555;
 
       font-size: 14px;
-
-      line-height: 1.45;
     }
 
 
-    /* ================================================
-       RÉSULTAT
-       ================================================ */
+    .dot {
+
+      display: inline-block;
+
+      width: 7px;
+
+      height: 7px;
+
+      margin-right: 5px;
+
+      border-radius: 50%;
+
+      background: #00a88f;
+
+      animation:
+        pulse 1s infinite;
+    }
+
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: .3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+
+    /* =========================================
+       ZOOM
+       ========================================= */
+
+    #zoomControls {
+
+      display: none;
+
+      margin-top: 12px;
+
+      justify-content: center;
+
+      align-items: center;
+
+      gap: 8px;
+    }
+
+
+    .zoomButton {
+
+      width: auto;
+
+      min-width: 48px;
+
+      padding: 10px 12px;
+
+      margin: 0;
+
+      border-radius: 12px;
+
+      background: #eeeeee;
+
+      color: #333;
+
+      font-size: 15px;
+
+      font-weight: 600;
+    }
+
+
+    #zoomValue {
+
+      min-width: 48px;
+
+      font-size: 14px;
+
+      font-weight: 600;
+
+      color: #555;
+    }
+
+
+    /* =========================================
+       BOUTONS
+       ========================================= */
+
+    button {
+
+      width: 100%;
+
+      border: 0;
+
+      border-radius: 14px;
+
+      padding: 16px;
+
+      margin-top: 10px;
+
+      font-size: 17px;
+
+      font-weight: 600;
+
+      cursor: pointer;
+    }
+
+
+    button:active {
+
+      transform: scale(.98);
+    }
+
+
+    #scanButton,
+    #captureButton,
+    #vintedButton {
+
+      background: #007782;
+
+      color: white;
+    }
+
+
+    #stopButton,
+    #newScanButton {
+
+      background: #eeeeee;
+
+      color: #333;
+    }
+
+
+    #captureButton,
+    #stopButton,
+    #vintedButton,
+    #newScanButton {
+
+      display: none;
+    }
+
+
+    /* =========================================
+       ISBN
+       ========================================= */
 
     #isbn {
 
@@ -230,65 +401,9 @@
     }
 
 
-    /* ================================================
-       BOUTONS
-       ================================================ */
-
-    button {
-
-      width: 100%;
-
-      border: none;
-
-      border-radius: 14px;
-
-      padding: 16px 18px;
-
-      margin-top: 10px;
-
-      font-size: 17px;
-
-      font-weight: 600;
-
-      cursor: pointer;
-    }
-
-    button:active {
-      transform: scale(.98);
-    }
-
-
-    #scanButton,
-    #captureButton,
-    #vintedButton {
-
-      background: #007782;
-
-      color: white;
-    }
-
-
-    #stopButton,
-    #newScanButton {
-
-      background: #eeeeee;
-
-      color: #333;
-    }
-
-
-    #captureButton,
-    #stopButton,
-    #vintedButton,
-    #newScanButton {
-
-      display: none;
-    }
-
-
     .privacy {
 
-      margin-top: 24px;
+      margin-top: 22px;
 
       color: #999;
 
@@ -304,10 +419,12 @@
     }
 
   </style>
+
 </head>
 
 
 <body>
+
 
   <main class="app">
 
@@ -327,9 +444,12 @@
     </p>
 
 
-    <!-- CAMÉRA -->
+    <!-- =========================================
+         CAMÉRA
+         ========================================= -->
 
     <div id="cameraContainer">
+
 
       <video
         id="video"
@@ -339,62 +459,108 @@
       ></video>
 
 
-      <div class="scan-frame">
+      <div class="scan-frame"></div>
 
-        <div class="scan-line"></div>
-
-      </div>
 
     </div>
 
 
     <div
-      id="cameraHint"
-      class="camera-hint"
+      id="scanningIndicator"
+      class="scanning-indicator"
     >
 
-      Place le code-barres dans le cadre.<br>
+      <span class="dot"></span>
 
-      Fais la mise au point puis appuie sur
-      <strong>Capturer</strong>.
+      Recherche automatique…
 
     </div>
 
 
-    <!-- CANVAS INVISIBLE -->
+    <!-- =========================================
+         ZOOM
+         ========================================= -->
+
+    <div id="zoomControls">
+
+      <button
+        id="zoomOut"
+        class="zoomButton"
+      >
+        −
+      </button>
+
+
+      <span id="zoomValue">
+        1×
+      </span>
+
+
+      <button
+        id="zoomIn"
+        class="zoomButton"
+      >
+        +
+      </button>
+
+    </div>
+
+
+    <!-- =========================================
+         CANVAS
+         ========================================= -->
 
     <canvas id="captureCanvas"></canvas>
 
 
-    <!-- ISBN -->
+    <!-- =========================================
+         ISBN
+         ========================================= -->
 
     <div id="isbn"></div>
 
 
-    <!-- BOUTONS -->
+    <!-- =========================================
+         BOUTONS
+         ========================================= -->
 
     <button id="scanButton">
+
       📷 Scanner un livre
+
     </button>
 
 
+    <!--
+      Secours manuel.
+      Le scan automatique est prioritaire.
+    -->
+
     <button id="captureButton">
-      📸 Capturer le code-barres
+
+      📸 Capturer maintenant
+
     </button>
 
 
     <button id="stopButton">
-      ✕ Arrêter le scanner
+
+      ✕ Arrêter
+
     </button>
 
 
     <button id="vintedButton">
+
       🔎 Rechercher cet ISBN sur Vinted
+
     </button>
 
 
     <button id="newScanButton">
+
       📷 Scanner un autre livre
+
     </button>
 
 
@@ -403,22 +569,34 @@
 
     <div class="privacy">
 
-      La photo est analysée localement
-      et n'est pas envoyée à un serveur.
+      La détection est effectuée
+      directement sur ton appareil.
+
+      <br>
+
+      Aucun historique de scans n'est conservé.
 
     </div>
+
 
   </main>
 
 
-  <!--
-    html5-qrcode
-  -->
+  <!-- =========================================
+       HTML5-QRCODE
+       ========================================= -->
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script
+    src="https://unpkg.com/html5-qrcode"
+  ></script>
 
 
   <script>
+
+
+    // =================================================
+    // VARIABLES
+    // =================================================
 
     let stream = null;
 
@@ -428,6 +606,16 @@
 
     let scanning = false;
 
+    let autoScanTimer = null;
+
+    let currentZoom = 1;
+
+    let zoomCapabilities = null;
+
+
+    // =================================================
+    // ÉLÉMENTS
+    // =================================================
 
     const video =
       document.getElementById("video");
@@ -441,45 +629,86 @@
       document.getElementById("cameraContainer");
 
 
-    const cameraHint =
-      document.getElementById("cameraHint");
+    const scanningIndicator =
+      document.getElementById(
+        "scanningIndicator"
+      );
+
+
+    const zoomControls =
+      document.getElementById(
+        "zoomControls"
+      );
+
+
+    const zoomOut =
+      document.getElementById(
+        "zoomOut"
+      );
+
+
+    const zoomIn =
+      document.getElementById(
+        "zoomIn"
+      );
+
+
+    const zoomValue =
+      document.getElementById(
+        "zoomValue"
+      );
 
 
     const scanButton =
-      document.getElementById("scanButton");
+      document.getElementById(
+        "scanButton"
+      );
 
 
     const captureButton =
-      document.getElementById("captureButton");
+      document.getElementById(
+        "captureButton"
+      );
 
 
     const stopButton =
-      document.getElementById("stopButton");
+      document.getElementById(
+        "stopButton"
+      );
 
 
     const vintedButton =
-      document.getElementById("vintedButton");
+      document.getElementById(
+        "vintedButton"
+      );
 
 
     const newScanButton =
-      document.getElementById("newScanButton");
+      document.getElementById(
+        "newScanButton"
+      );
 
 
     const isbnDisplay =
-      document.getElementById("isbn");
+      document.getElementById(
+        "isbn"
+      );
 
 
     const message =
-      document.getElementById("message");
+      document.getElementById(
+        "message"
+      );
 
 
-    // ==================================================
-    // VALIDATION ISBN-13
-    // ==================================================
+    // =================================================
+    // ISBN-13
+    // =================================================
 
     function isValidISBN13(isbn) {
 
       if (!/^\d{13}$/.test(isbn)) {
+
         return false;
       }
 
@@ -487,7 +716,11 @@
       let sum = 0;
 
 
-      for (let i = 0; i < 12; i++) {
+      for (
+        let i = 0;
+        i < 12;
+        i++
+      ) {
 
         const digit =
           Number(isbn[i]);
@@ -495,7 +728,11 @@
 
         sum +=
           digit *
-          (i % 2 === 0 ? 1 : 3);
+          (
+            i % 2 === 0
+              ? 1
+              : 3
+          );
       }
 
 
@@ -510,13 +747,15 @@
     }
 
 
-    // ==================================================
-    // DÉMARRER LA CAMÉRA
-    // ==================================================
+    // =================================================
+    // DÉMARRER
+    // =================================================
 
     async function startScanner() {
 
+
       if (scanning) {
+
         return;
       }
 
@@ -542,7 +781,7 @@
         "block";
 
 
-      cameraHint.style.display =
+      scanningIndicator.style.display =
         "block";
 
 
@@ -559,31 +798,34 @@
 
 
       message.textContent =
-        "Démarrage de la caméra…";
+        "📷 Recherche du code-barres…";
 
 
       try {
 
 
         /*
-         * Même accès caméra que la version
-         * qui fonctionnait chez toi.
+         * On conserve la méthode caméra
+         * qui fonctionne sur ton iPhone.
+         *
+         * Pas de résolution forcée.
          */
 
         stream =
-          await navigator.mediaDevices.getUserMedia({
+          await navigator.mediaDevices
+            .getUserMedia({
 
-            video: {
+              video: {
 
-              facingMode: {
-                ideal: "environment"
-              }
+                facingMode: {
+                  ideal: "environment"
+                }
 
-            },
+              },
 
-            audio: false
+              audio: false
 
-          });
+            });
 
 
         video.srcObject =
@@ -593,15 +835,26 @@
         await video.play();
 
 
-        message.textContent =
-          "📷 Fais la mise au point sur le code-barres.";
+        /*
+         * Essai de récupération des capacités
+         * de la caméra.
+         */
+
+        setupZoom();
+
+
+        /*
+         * Première recherche immédiate.
+         */
+
+        scheduleAutoScan();
 
 
       } catch (error) {
 
 
         console.error(
-          "Erreur caméra :",
+          "Erreur caméra:",
           error
         );
 
@@ -615,31 +868,243 @@
     }
 
 
-    // ==================================================
-    // CAPTURE
-    // ==================================================
+    // =================================================
+    // ZOOM
+    // =================================================
 
-    async function captureBarcode() {
+    function setupZoom() {
 
-      if (!stream || !scanning) {
+
+      try {
+
+
+        const track =
+          stream.getVideoTracks()[0];
+
+
+        zoomCapabilities =
+          track.getCapabilities();
+
+
+        if (
+          zoomCapabilities &&
+          zoomCapabilities.zoom
+        ) {
+
+
+          zoomControls.style.display =
+            "flex";
+
+
+          currentZoom =
+            zoomCapabilities.zoom.min;
+
+
+          applyZoom();
+
+
+        } else {
+
+
+          zoomControls.style.display =
+            "none";
+        }
+
+
+      } catch (error) {
+
+
+        console.log(
+          "Zoom non disponible",
+          error
+        );
+
+
+        zoomControls.style.display =
+          "none";
+      }
+    }
+
+
+    async function applyZoom() {
+
+
+      if (!stream) {
+
         return;
       }
 
 
-      message.textContent =
-        "📸 Mise au point et capture…";
+      const track =
+        stream.getVideoTracks()[0];
+
+
+      if (
+        !zoomCapabilities ||
+        !zoomCapabilities.zoom
+      ) {
+
+        return;
+      }
+
+
+      const min =
+        zoomCapabilities.zoom.min;
+
+
+      const max =
+        zoomCapabilities.zoom.max;
+
+
+      currentZoom =
+        Math.max(
+          min,
+          Math.min(
+            max,
+            currentZoom
+          )
+        );
+
+
+      try {
+
+
+        await track.applyConstraints({
+
+          advanced: [
+
+            {
+              zoom: currentZoom
+            }
+
+          ]
+
+        });
+
+
+        zoomValue.textContent =
+          currentZoom.toFixed(1)
+            .replace(".0", "") +
+          "×";
+
+
+      } catch (error) {
+
+
+        console.log(
+          "Impossible d'appliquer le zoom",
+          error
+        );
+      }
+    }
+
+
+    zoomOut.addEventListener(
+      "click",
+      async () => {
+
+        if (
+          !zoomCapabilities ||
+          !zoomCapabilities.zoom
+        ) {
+
+          return;
+        }
+
+
+        currentZoom -=
+          0.5;
+
+
+        await applyZoom();
+
+      }
+    );
+
+
+    zoomIn.addEventListener(
+      "click",
+      async () => {
+
+        if (
+          !zoomCapabilities ||
+          !zoomCapabilities.zoom
+        ) {
+
+          return;
+        }
+
+
+        currentZoom +=
+          0.5;
+
+
+        await applyZoom();
+
+      }
+    );
+
+
+    // =================================================
+    // RECHERCHE AUTOMATIQUE
+    // =================================================
+
+    function scheduleAutoScan() {
+
+
+      if (!scanning) {
+
+        return;
+      }
+
+
+      clearTimeout(
+        autoScanTimer
+      );
+
+
+      autoScanTimer =
+        setTimeout(
+          autoCaptureAndScan,
+          700
+        );
+    }
+
+
+    // =================================================
+    // CAPTURE AUTOMATIQUE
+    // =================================================
+
+    async function autoCaptureAndScan() {
+
+
+      if (
+        !scanning ||
+        !stream
+      ) {
+
+        return;
+      }
 
 
       /*
-       * Petit délai pour laisser
-       * l'autofocus terminer son travail.
+       * Vérification de la vidéo.
        */
 
-      await new Promise(
-        resolve =>
-          setTimeout(resolve, 400)
-      );
+      if (
+        !video.videoWidth ||
+        !video.videoHeight
+      ) {
 
+        scheduleAutoScan();
+
+        return;
+      }
+
+
+      /*
+       * Petite capture de l'image vidéo.
+       */
 
       const width =
         video.videoWidth;
@@ -648,19 +1113,6 @@
       const height =
         video.videoHeight;
 
-
-      if (!width || !height) {
-
-        message.textContent =
-          "❌ Impossible de capturer l'image.";
-
-        return;
-      }
-
-
-      /*
-       * Image complète.
-       */
 
       canvas.width =
         width;
@@ -671,7 +1123,12 @@
 
 
       const context =
-        canvas.getContext("2d");
+        canvas.getContext(
+          "2d",
+          {
+            willReadFrequently: true
+          }
+        );
 
 
       context.drawImage(
@@ -684,347 +1141,447 @@
 
 
       /*
-       * ------------------------------------------------
-       * RECADRAGE
-       * ------------------------------------------------
+       * Plusieurs zones sont testées.
        *
-       * On garde principalement la zone centrale
-       * où se trouve le code-barres.
-       *
-       * On retire une partie des côtés et du haut/bas.
+       * Cela évite d'être trop dépendant
+       * de la position exacte du code-barres.
        */
 
-      const cropX =
-        Math.round(width * 0.05);
+      const zones = [
+
+        {
+          x: 0.05,
+          y: 0.25,
+          w: 0.90,
+          h: 0.50
+        },
+
+        {
+          x: 0.10,
+          y: 0.32,
+          w: 0.80,
+          h: 0.36
+        },
+
+        {
+          x: 0.15,
+          y: 0.38,
+          w: 0.70,
+          h: 0.24
+        }
+
+      ];
 
 
-      const cropY =
-        Math.round(height * 0.30);
+      for (
+        const zone of zones
+      ) {
 
 
-      const cropWidth =
-        Math.round(width * 0.90);
+        if (!scanning) {
+
+          return;
+        }
 
 
-      const cropHeight =
-        Math.round(height * 0.40);
+        const file =
+          await createCropFile(
+            canvas,
+            zone
+          );
 
 
-      const cropCanvas =
-        document.createElement("canvas");
+        if (!file) {
+
+          continue;
+        }
 
 
-      cropCanvas.width =
-        cropWidth;
+        const result =
+          await decodeImage(
+            file
+          );
 
 
-      cropCanvas.height =
-        cropHeight;
+        if (result) {
 
 
-      const cropContext =
-        cropCanvas.getContext("2d");
+          const code =
+            String(result)
+              .replace(
+                /\D/g,
+                ""
+              );
 
 
-      cropContext.drawImage(
+          /*
+           * ISBN-13 valide.
+           */
 
-        canvas,
-
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-
-        0,
-        0,
-        cropWidth,
-        cropHeight
-
-      );
+          if (
+            code.length === 13 &&
+            isValidISBN13(code)
+          ) {
 
 
-      /*
-       * On agrandit également la zone recadrée.
-       *
-       * Cela aide beaucoup lorsque le code-barres
-       * est relativement petit dans l'image.
-       */
-
-      const enlargedCanvas =
-        document.createElement("canvas");
-
-
-      enlargedCanvas.width =
-        cropWidth * 2;
-
-
-      enlargedCanvas.height =
-        cropHeight * 2;
-
-
-      const enlargedContext =
-        enlargedCanvas.getContext("2d");
-
-
-      enlargedContext.imageSmoothingEnabled =
-        false;
-
-
-      enlargedContext.drawImage(
-
-        cropCanvas,
-
-        0,
-        0,
-        cropWidth,
-        cropHeight,
-
-        0,
-        0,
-        cropWidth * 2,
-        cropHeight * 2
-
-      );
-
-
-      /*
-       * Conversion en image JPEG.
-       */
-
-      enlargedCanvas.toBlob(
-
-        async function(blob) {
-
-          if (!blob) {
-
-            message.textContent =
-              "❌ Impossible de créer l'image.";
-
-            return;
-          }
-
-
-          const file =
-            new File(
-
-              [blob],
-
-              "isbn-capture.jpg",
-
-              {
-                type: "image/jpeg"
-              }
-
+            await handleISBN(
+              code
             );
 
 
-          await analyseImage(file);
+            return;
+          }
+        }
+      }
 
-        },
 
-        "image/jpeg",
+      /*
+       * Aucun résultat :
+       * on recommence automatiquement.
+       */
 
-        0.98
+      scheduleAutoScan();
+    }
 
+
+    // =================================================
+    // CRÉATION D'UNE IMAGE RECADRÉE
+    // =================================================
+
+    function createCropFile(
+      sourceCanvas,
+      zone
+    ) {
+
+
+      return new Promise(
+        resolve => {
+
+
+          const x =
+            Math.round(
+              sourceCanvas.width *
+              zone.x
+            );
+
+
+          const y =
+            Math.round(
+              sourceCanvas.height *
+              zone.y
+            );
+
+
+          const w =
+            Math.round(
+              sourceCanvas.width *
+              zone.w
+            );
+
+
+          const h =
+            Math.round(
+              sourceCanvas.height *
+              zone.h
+            );
+
+
+          /*
+           * On agrandit la zone.
+           */
+
+          const scale =
+            2.5;
+
+
+          const cropCanvas =
+            document.createElement(
+              "canvas"
+            );
+
+
+          cropCanvas.width =
+            Math.round(
+              w * scale
+            );
+
+
+          cropCanvas.height =
+            Math.round(
+              h * scale
+            );
+
+
+          const ctx =
+            cropCanvas.getContext(
+              "2d"
+            );
+
+
+          ctx.imageSmoothingEnabled =
+            false;
+
+
+          ctx.drawImage(
+
+            sourceCanvas,
+
+            x,
+            y,
+            w,
+            h,
+
+            0,
+            0,
+
+            cropCanvas.width,
+            cropCanvas.height
+
+          );
+
+
+          cropCanvas.toBlob(
+
+            blob => {
+
+
+              if (!blob) {
+
+                resolve(null);
+
+                return;
+              }
+
+
+              resolve(
+
+                new File(
+
+                  [blob],
+
+                  "scan.jpg",
+
+                  {
+                    type:
+                      "image/jpeg"
+                  }
+
+                )
+
+              );
+
+            },
+
+            "image/jpeg",
+
+            0.98
+
+          );
+
+        }
       );
     }
 
 
-    // ==================================================
-    // ANALYSE DE L'IMAGE
-    // ==================================================
+    // =================================================
+    // DÉCODAGE IMAGE
+    // =================================================
 
-    async function analyseImage(file) {
-
-
-      message.textContent =
-        "🔎 Lecture du code-barres…";
+    async function decodeImage(
+      file
+    ) {
 
 
-      /*
-       * Crée un conteneur invisible
-       * pour html5-qrcode.
-       */
-
-      let reader =
+      let readerElement =
         document.getElementById(
           "readerForImage"
         );
 
 
-      if (!reader) {
+      if (!readerElement) {
 
-        reader =
-          document.createElement("div");
 
-        reader.id =
+        readerElement =
+          document.createElement(
+            "div"
+          );
+
+
+        readerElement.id =
           "readerForImage";
 
-        reader.style.display =
+
+        readerElement.style.display =
           "none";
 
+
         document.body.appendChild(
-          reader
+          readerElement
         );
       }
 
 
-      /*
-       * Nouveau lecteur.
-       */
+      let reader = null;
+
 
       try {
 
-        scanner =
+
+        reader =
           new Html5Qrcode(
             "readerForImage"
           );
 
-      } catch (error) {
-
-        console.error(error);
-
-        message.textContent =
-          "❌ Impossible de lancer le lecteur.";
-
-        return;
-      }
-
-
-      try {
-
 
         /*
-         * Analyse locale de l'image.
+         * Analyse locale.
          */
 
         const result =
-          await scanner.scanFile(
+          await reader.scanFile(
             file,
             false
           );
 
 
-        const code =
-          String(result)
-            .replace(/\D/g, "");
+        try {
+
+          reader.clear();
+
+        } catch (e) {}
 
 
-        /*
-         * On affiche temporairement
-         * ce que le lecteur a réellement trouvé.
-         *
-         * C'est utile pour notre diagnostic.
-         */
-
-        console.log(
-          "Code détecté :",
-          code
-        );
+        return result;
 
 
-        if (
-          code.length === 13 &&
-          isValidISBN13(code)
-        ) {
+      } catch (error) {
 
 
-          currentISBN =
-            code;
+        try {
 
+          if (reader) {
 
-          message.textContent =
-            "✅ ISBN détecté !";
+            reader.clear();
 
-
-          isbnDisplay.textContent =
-            code;
-
-
-          isbnDisplay.style.display =
-            "block";
-
-
-          vintedButton.style.display =
-            "block";
-
-
-          newScanButton.style.display =
-            "block";
-
-
-        } else {
-
-
-          /*
-           * Si un EAN est détecté mais
-           * n'est pas un ISBN valide,
-           * on le signale séparément.
-           */
-
-          if (code.length === 13) {
-
-            message.textContent =
-              "⚠️ Code EAN détecté : " +
-              code +
-              " — mais il ne correspond pas à un ISBN valide.";
-
-          } else {
-
-            message.textContent =
-              "❌ Code non détecté. " +
-              "Rapproche légèrement le livre " +
-              "et recommence la capture.";
           }
-        }
+
+        } catch (e) {}
 
 
-      } catch (error) {
-
-
-        console.log(
-          "Aucun code détecté :",
-          error
-        );
-
-
-        message.textContent =
-          "❌ Code non détecté. " +
-          "Place bien les barres dans le cadre " +
-          "et fais la mise au point avant de capturer.";
+        return null;
       }
-
-
-      /*
-       * Nettoyage.
-       */
-
-      try {
-
-        scanner.clear();
-
-      } catch (error) {
-
-        console.log(error);
-      }
-
-
-      scanner =
-        null;
     }
 
 
-    // ==================================================
-    // ARRÊTER LA CAMÉRA
-    // ==================================================
+    // =================================================
+    // CAPTURE MANUELLE
+    // =================================================
 
-    async function stopScanner() {
+    async function captureManual() {
+
+
+      if (!scanning) {
+
+        return;
+      }
+
+
+      message.textContent =
+        "📸 Analyse…";
+
+
+      /*
+       * Même moteur que le scan automatique,
+       * mais on force immédiatement une analyse.
+       */
+
+      clearTimeout(
+        autoScanTimer
+      );
+
+
+      await autoCaptureAndScan();
+
+
+      if (scanning) {
+
+        message.textContent =
+          "🔎 Rien trouvé. " +
+          "Ajuste légèrement la distance ou le zoom.";
+      }
+    }
+
+
+    // =================================================
+    // ISBN TROUVÉ
+    // =================================================
+
+    async function handleISBN(
+      isbn
+    ) {
+
+
+      if (!scanning) {
+
+        return;
+      }
+
+
+      currentISBN =
+        isbn;
+
 
       scanning =
         false;
 
 
+      clearTimeout(
+        autoScanTimer
+      );
+
+
+      await stopScanner();
+
+
+      isbnDisplay.textContent =
+        currentISBN;
+
+
+      isbnDisplay.style.display =
+        "block";
+
+
+      message.textContent =
+        "✅ ISBN trouvé !";
+
+
+      vintedButton.style.display =
+        "block";
+
+
+      newScanButton.style.display =
+        "block";
+    }
+
+
+    // =================================================
+    // ARRÊTER
+    // =================================================
+
+    async function stopScanner() {
+
+
+      scanning =
+        false;
+
+
+      clearTimeout(
+        autoScanTimer
+      );
+
+
       if (stream) {
+
 
         const tracks =
           stream.getTracks();
@@ -1048,7 +1605,11 @@
         "none";
 
 
-      cameraHint.style.display =
+      scanningIndicator.style.display =
+        "none";
+
+
+      zoomControls.style.display =
         "none";
 
 
@@ -1065,20 +1626,24 @@
     }
 
 
-    // ==================================================
+    // =================================================
     // VINTED
-    // ==================================================
+    // =================================================
 
     function searchVinted() {
 
+
       if (!currentISBN) {
+
         return;
       }
 
 
       const url =
         "https://www.vinted.fr/catalog?search_text=" +
-        encodeURIComponent(currentISBN);
+        encodeURIComponent(
+          currentISBN
+        );
 
 
       window.location.href =
@@ -1086,11 +1651,12 @@
     }
 
 
-    // ==================================================
+    // =================================================
     // NOUVEAU SCAN
-    // ==================================================
+    // =================================================
 
     function newScan() {
+
 
       currentISBN =
         null;
@@ -1116,9 +1682,9 @@
     }
 
 
-    // ==================================================
+    // =================================================
     // ÉVÉNEMENTS
-    // ==================================================
+    // =================================================
 
     scanButton.addEventListener(
       "click",
@@ -1128,7 +1694,7 @@
 
     captureButton.addEventListener(
       "click",
-      captureBarcode
+      captureManual
     );
 
 
@@ -1149,7 +1715,9 @@
       newScan
     );
 
+
   </script>
 
 </body>
+
 </html>
