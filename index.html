@@ -75,37 +75,42 @@
 
     .camera-container {
       display: none;
+
       width: 100%;
+
       position: relative;
       overflow: hidden;
+
       border-radius: 18px;
+
       background: #111;
+
       margin-bottom: 14px;
     }
 
     #video {
       display: block;
+
       width: 100%;
-      height: auto;
-      min-height: 260px;
+      height: 300px;
 
       object-fit: cover;
 
-      /*
-       * Laisse l'iPhone gérer l'autofocus
-       * et conserve la caméra arrière.
-       */
+      background: #111;
     }
 
     .scan-frame {
       position: absolute;
 
-      left: 8%;
-      right: 8%;
+      left: 7%;
+      right: 7%;
+
       top: 35%;
+
       height: 30%;
 
       border: 3px solid #00a88f;
+
       border-radius: 12px;
 
       box-shadow:
@@ -117,8 +122,9 @@
     .scan-line {
       position: absolute;
 
-      left: 10%;
-      right: 10%;
+      left: 5%;
+      right: 5%;
+
       top: 50%;
 
       height: 2px;
@@ -128,11 +134,14 @@
       box-shadow:
         0 0 8px #00d1b2;
 
-      animation: scanline 1.8s ease-in-out infinite;
+      animation:
+        scanline 1.8s ease-in-out infinite;
     }
 
     @keyframes scanline {
-      0%, 100% {
+
+      0%,
+      100% {
         transform: translateY(-35px);
       }
 
@@ -142,10 +151,14 @@
     }
 
     .camera-hint {
+      display: none;
+
       margin: 10px 0 18px;
 
       color: #666;
+
       font-size: 14px;
+
       line-height: 1.4;
     }
 
@@ -157,9 +170,11 @@
       padding: 16px;
 
       background: #f2f2f2;
+
       border-radius: 14px;
 
       font-size: 21px;
+
       font-weight: 700;
 
       letter-spacing: 1px;
@@ -173,6 +188,7 @@
       color: #666;
 
       font-size: 14px;
+
       line-height: 1.4;
     }
 
@@ -180,33 +196,39 @@
       width: 100%;
 
       border: none;
+
       border-radius: 14px;
 
       padding: 16px 18px;
 
       font-size: 17px;
+
       font-weight: 600;
 
       cursor: pointer;
 
       margin-top: 10px;
 
-      transition: transform .1s;
+      transition:
+        transform 0.1s,
+        opacity 0.2s;
     }
 
     button:active {
-      transform: scale(.98);
+      transform: scale(0.98);
     }
 
     #scanButton,
     #vintedButton {
       background: #007782;
+
       color: white;
     }
 
     #stopButton,
     #newScanButton {
       background: #eeeeee;
+
       color: #333;
     }
 
@@ -220,6 +242,7 @@
       margin-top: 24px;
 
       font-size: 12px;
+
       line-height: 1.4;
 
       color: #999;
@@ -232,16 +255,25 @@
 
   <main class="app">
 
-    <div class="logo">📚</div>
+    <div class="logo">
+      📚
+    </div>
 
-    <h1>ISBN Research</h1>
+    <h1>
+      ISBN Research
+    </h1>
 
     <p class="subtitle">
       Scanne le code-barres d'un livre
     </p>
 
 
-    <div id="cameraContainer" class="camera-container">
+    <!-- Caméra -->
+
+    <div
+      id="cameraContainer"
+      class="camera-container"
+    >
 
       <video
         id="video"
@@ -250,21 +282,35 @@
         autoplay
       ></video>
 
+
       <div class="scan-frame">
+
         <div class="scan-line"></div>
+
       </div>
 
     </div>
 
 
-    <div id="cameraHint" class="camera-hint" style="display:none;">
+    <div
+      id="cameraHint"
+      class="camera-hint"
+    >
+
       Place le code-barres dans le cadre.<br>
-      Évite les reflets et rapproche doucement le livre.
+
+      Rapproche ou éloigne doucement le livre
+      pour aider la mise au point.
+
     </div>
 
 
+    <!-- ISBN détecté -->
+
     <div id="isbn"></div>
 
+
+    <!-- Boutons -->
 
     <button id="scanButton">
       📷 Scanner un livre
@@ -290,8 +336,8 @@
 
 
     <div class="privacy">
-      Aucun historique ni donnée personnelle n'est enregistré
-      par cette application.
+      Aucun historique ni donnée personnelle
+      n'est enregistré par cette application.
     </div>
 
   </main>
@@ -299,22 +345,29 @@
 
   <!--
     ZXing Browser
-    Bibliothèque de lecture de codes-barres
-    dans le navigateur.
+
+    Bibliothèque open-source permettant
+    de lire des codes-barres depuis la caméra.
   -->
-  <script src="https://unpkg.com/@zxing/browser@latest"></script>
+
+  <script
+    src="https://unpkg.com/@zxing/browser@latest">
+  </script>
 
 
   <script>
 
     let codeReader = null;
+
     let controls = null;
 
     let currentISBN = null;
+
     let scanning = false;
 
 
-    const video = document.getElementById("video");
+    const video =
+      document.getElementById("video");
 
     const cameraContainer =
       document.getElementById("cameraContainer");
@@ -351,26 +404,35 @@
         return false;
       }
 
+
       let sum = 0;
+
 
       for (let i = 0; i < 12; i++) {
 
-        const digit = Number(isbn[i]);
+        const digit =
+          Number(isbn[i]);
 
-        sum += digit * (
-          i % 2 === 0 ? 1 : 3
-        );
+
+        sum +=
+          digit *
+          (i % 2 === 0 ? 1 : 3);
       }
+
 
       const checkDigit =
         (10 - (sum % 10)) % 10;
 
-      return checkDigit === Number(isbn[12]);
+
+      return (
+        checkDigit ===
+        Number(isbn[12])
+      );
     }
 
 
     // ==================================================
-    // Démarrage du scanner
+    // Démarrer le scanner
     // ==================================================
 
     async function startScanner() {
@@ -379,18 +441,35 @@
         return;
       }
 
+
       scanning = true;
+
       currentISBN = null;
 
-      isbnDisplay.style.display = "none";
-      vintedButton.style.display = "none";
-      newScanButton.style.display = "none";
 
-      cameraContainer.style.display = "block";
-      cameraHint.style.display = "block";
+      isbnDisplay.style.display =
+        "none";
 
-      scanButton.style.display = "none";
-      stopButton.style.display = "block";
+      vintedButton.style.display =
+        "none";
+
+      newScanButton.style.display =
+        "none";
+
+
+      cameraContainer.style.display =
+        "block";
+
+      cameraHint.style.display =
+        "block";
+
+
+      scanButton.style.display =
+        "none";
+
+      stopButton.style.display =
+        "block";
+
 
       message.textContent =
         "Démarrage de la caméra…";
@@ -399,18 +478,20 @@
       try {
 
         /*
-         * On crée un lecteur multi-format,
-         * mais on lui indique de privilégier
-         * les codes EAN utilisés par les livres.
+         * On utilise uniquement EAN-13.
+         *
+         * C'est le format utilisé pour les
+         * ISBN-13 des livres.
          */
 
         const hints = new Map();
 
+
         hints.set(
           ZXingBrowser.DecodeHintType.POSSIBLE_FORMATS,
+
           [
-            ZXingBrowser.BarcodeFormat.EAN_13,
-            ZXingBrowser.BarcodeFormat.EAN_8
+            ZXingBrowser.BarcodeFormat.EAN_13
           ]
         );
 
@@ -422,35 +503,19 @@
 
 
         /*
-         * undefined laisse ZXing sélectionner
-         * automatiquement la caméra appropriée.
+         * IMPORTANT :
+         *
+         * On laisse ZXing choisir la caméra.
+         *
+         * Avec deviceId = null,
+         * ZXing utilise la caméra
+         * "environment" (arrière).
          */
 
         controls =
-          await codeReader.decodeFromConstraints(
+          await codeReader.decodeFromVideoDevice(
 
-            {
-              video: {
-                facingMode: {
-                  ideal: "environment"
-                },
-
-                width: {
-                  ideal: 1920
-                },
-
-                height: {
-                  ideal: 1080
-                },
-
-                /*
-                 * Demande à l'iPhone de privilégier
-                 * l'autofocus continu lorsqu'il le permet.
-                 */
-
-                focusMode: "continuous"
-              }
-            },
+            null,
 
             video,
 
@@ -466,6 +531,7 @@
                 const text =
                   result.getText();
 
+
                 handleBarcode(text);
               }
 
@@ -479,11 +545,17 @@
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "Erreur caméra :",
+          error
+        );
+
 
         message.textContent =
           "❌ Impossible d'accéder à la caméra. " +
-          "Vérifie l'autorisation dans les réglages de Safari.";
+          "Vérifie l'autorisation de caméra " +
+          "de cette web-app.";
+
 
         await stopScanner();
       }
@@ -491,7 +563,7 @@
 
 
     // ==================================================
-    // Traitement du code détecté
+    // Traitement du code
     // ==================================================
 
     async function handleBarcode(text) {
@@ -502,24 +574,31 @@
 
 
       const digits =
-        String(text).replace(/\D/g, "");
+        String(text)
+          .replace(/\D/g, "");
 
 
       /*
-       * On accepte uniquement un ISBN-13 valide.
+       * On accepte uniquement
+       * un ISBN-13 valide.
        */
 
       if (!isValidISBN13(digits)) {
 
         message.textContent =
-          "Code détecté, mais ce n'est pas un ISBN-13.";
+          "Code détecté, mais ce n'est pas " +
+          "un ISBN-13 valide.";
 
         return;
       }
 
 
-      currentISBN = digits;
-      scanning = false;
+      currentISBN =
+        digits;
+
+
+      scanning =
+        false;
 
 
       await stopScanner();
@@ -527,6 +606,7 @@
 
       isbnDisplay.textContent =
         currentISBN;
+
 
       isbnDisplay.style.display =
         "block";
@@ -538,6 +618,7 @@
 
       vintedButton.style.display =
         "block";
+
 
       newScanButton.style.display =
         "block";
@@ -556,10 +637,14 @@
       if (controls) {
 
         try {
-          controls.stop();
+
+          await controls.stop();
+
         } catch (error) {
+
           console.log(error);
         }
+
 
         controls = null;
       }
@@ -568,17 +653,22 @@
       if (codeReader) {
 
         try {
+
           codeReader.reset();
+
         } catch (error) {
+
           console.log(error);
         }
+
 
         codeReader = null;
       }
 
 
       /*
-       * Arrêt explicite du flux caméra.
+       * Sécurité supplémentaire :
+       * on arrête toutes les pistes vidéo.
        */
 
       if (video.srcObject) {
@@ -586,9 +676,11 @@
         const tracks =
           video.srcObject.getTracks();
 
-        tracks.forEach(track => {
-          track.stop();
-        });
+
+        tracks.forEach(
+          track => track.stop()
+        );
+
 
         video.srcObject = null;
       }
@@ -597,11 +689,14 @@
       cameraContainer.style.display =
         "none";
 
+
       cameraHint.style.display =
         "none";
 
+
       stopButton.style.display =
         "none";
+
 
       scanButton.style.display =
         "block";
@@ -619,17 +714,18 @@
       }
 
 
+      /*
+       * L'ISBN est le SEUL terme
+       * envoyé dans la recherche.
+       */
+
       const url =
         "https://www.vinted.fr/catalog?search_text=" +
         encodeURIComponent(currentISBN);
 
 
-      /*
-       * L'ISBN est le SEUL terme envoyé
-       * dans la recherche Vinted.
-       */
-
-      window.location.href = url;
+      window.location.href =
+        url;
     }
 
 
@@ -641,23 +737,29 @@
 
       currentISBN = null;
 
+
       isbnDisplay.style.display =
         "none";
+
 
       vintedButton.style.display =
         "none";
 
+
       newScanButton.style.display =
         "none";
 
-      message.textContent = "";
+
+      message.textContent =
+        "";
+
 
       startScanner();
     }
 
 
     // ==================================================
-    // Événements
+    // Boutons
     // ==================================================
 
     scanButton.addEventListener(
@@ -665,15 +767,18 @@
       startScanner
     );
 
+
     stopButton.addEventListener(
       "click",
       stopScanner
     );
 
+
     vintedButton.addEventListener(
       "click",
       searchVinted
     );
+
 
     newScanButton.addEventListener(
       "click",
