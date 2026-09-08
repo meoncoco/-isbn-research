@@ -1,109 +1,122 @@
-"use strict";
-
-/*
- * ISBN RESEARCH
- *
- * Scanner V3
- *
- * Stratégie :
- *
- * 1. Caméra native haute résolution
- * 2. BarcodeDetector natif si disponible
- * 3. html5-qrcode sur une capture
- * 4. OCR Tesseract en dernier recours
- *
- */
+/* =====================================================
+   ISBN SCANNER
+   ===================================================== */
 
 
-// =====================================================
-// DOM
-// =====================================================
+/* =========================
+   ELEMENTS
+========================= */
 
-const video =
-  document.getElementById("camera-video");
+const video = document.getElementById("video");
 
-const cameraContainer =
-  document.getElementById("camera-container");
+const startCameraButton =
+  document.getElementById("startCamera");
 
-const placeholder =
-  document.getElementById("scanner-placeholder");
+const stopCameraButton =
+  document.getElementById("stopCamera");
 
-const startButton =
-  document.getElementById("start-scanner");
+const cameraStatus =
+  document.getElementById("cameraStatus");
 
-const captureButton =
-  document.getElementById("capture-button");
+const imageInput =
+  document.getElementById("imageInput");
 
-const photoButton =
-  document.getElementById("photo-button");
+const cropSection =
+  document.getElementById("cropSection");
 
-const stopButton =
-  document.getElementById("stop-scanner");
+const cropImage =
+  document.getElementById("cropImage");
 
-const photoInput =
-  document.getElementById("photo-input");
-
-const analysisCard =
-  document.getElementById("analysis-card");
-
-const analysisTitle =
-  document.getElementById("analysis-title");
-
-const analysisText =
-  document.getElementById("analysis-text");
+const scanCropButton =
+  document.getElementById("scanCrop");
 
 const isbnInput =
-  document.getElementById("isbn");
+  document.getElementById("isbnInput");
 
-const clearButton =
-  document.getElementById("clear-isbn");
+const copyButton =
+  document.getElementById("copyButton");
 
-const statusElement =
-  document.getElementById("isbn-status");
+const resultStatus =
+  document.getElementById("resultStatus");
 
 const vintedButton =
-  document.getElementById("vinted-search");
+  document.getElementById("vintedButton");
 
-const historyElement =
-  document.getElementById("history");
-
-const clearHistoryButton =
-  document.getElementById("clear-history");
+const googleButton =
+  document.getElementById("googleButton");
 
 
-// =====================================================
-// STATE
-// =====================================================
+/* =========================
+   VARIABLES
+========================= */
 
-let cameraStream = null;
-
-let cameraRunning = false;
-
-let detectionTimer = null;
-
-let processing = false;
-
-let barcodeDetector = null;
-
-const HISTORY_KEY =
-  "isbn-research-history";
+let stream = null;
+let codeReader = null;
+let cropper = null;
 
 
-// =====================================================
-// ISBN
-// =====================================================
+/* =========================
+   INITIALISATION ZXING
+========================= */
 
-function cleanISBN(value) {
-
-  return String(value || "")
-    .replace(/[^0-9Xx]/g, "")
-    .toUpperCase();
+try {
+  codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+} catch (error) {
+  console.error("Impossible de charger ZXing :", error);
 }
 
 
+/* =====================================================
+   UTILITAIRES ISBN
+   ===================================================== */
+
+
+/**
+ * Nettoie une chaîne pour ne garder
+ * que les chiffres et éventuellement X.
+ */
+function cleanISBN(value) {
+
+  return value
+    .toUpperCase()
+    .replace(/[^0-9X]/g, "");
+
+}
+
+
+/**
+ * Calcule la clé de contrôle d'un ISBN-13.
+ */
+function isValidISBN13(isbn) {
+
+  if (!/^\d{13}$/.test(isbn)) {
+    return false;
+  }
+
+  let sum = 0;
+
+  for (let i = 0; i < 12; i++) {
+
+    sum +=
+      Number(isbn[i]) *
+      (i % 2 === 0 ? 1 : 3);
+
+  }
+
+  const checkDigit =
+    (10 - (sum % 10)) % 10;
+
+  return checkDigit === Number(isbn[12]);
+
+}
+
+
+/**
+ * Calcule la clé de contrôle d'un ISBN-10.
+ */
 function isValidISBN10(isbn) {
 
-  if (!/^[0-9]{9}[0-9X]$/.test(isbn)) {
+  if (!/^\d{9}[\dX]$/.test(isbn)) {
     return false;
   }
 
@@ -120,1335 +133,659 @@ function isValidISBN10(isbn) {
   }
 
   return sum % 11 === 0;
+
 }
 
 
-function isValidISBN13(isbn) {
-
-  if (!/^\d{13}$/.test(isbn)) {
-    return false;
-  }
-
-  let sum = 0;
-
-  for (let i = 0; i < 12; i++) {
-
-    const digit =
-      Number(isbn[i]);
-
-    sum +=
-      i % 2 === 0
-        ? digit
-        : digit * 3;
-  }
-
-  const check =
-    (10 - (sum % 10)) % 10;
-
-  return check === Number(isbn[12]);
-}
-
-
+/**
+ * Convertit un ISBN-10 en ISBN-13.
+ */
 function isbn10To13(isbn10) {
 
   const base =
-    "978" +
-    isbn10.substring(0, 9);
+    "978" + isbn10.substring(0, 9);
 
   let sum = 0;
 
   for (let i = 0; i < 12; i++) {
 
-    const digit =
-      Number(base[i]);
-
     sum +=
-      i % 2 === 0
-        ? digit
-        : digit * 3;
+      Number(base[i]) *
+      (i % 2 === 0 ? 1 : 3);
+
   }
 
-  const check =
+  const checkDigit =
     (10 - (sum % 10)) % 10;
 
-  return base + check;
+  return base + checkDigit;
+
 }
 
 
-function normalizeISBN(value) {
-
-  const isbn =
-    cleanISBN(value);
-
-  if (isValidISBN13(isbn)) {
-    return isbn;
-  }
-
-  if (isValidISBN10(isbn)) {
-    return isbn10To13(isbn);
-  }
-
-  return null;
-}
-
-
-// =====================================================
-// RESULTAT
-// =====================================================
-
-function setISBN(value) {
-
-  const isbn =
-    normalizeISBN(value);
-
-  if (!isbn) {
-
-    statusElement.textContent =
-      "ISBN invalide ou incomplet";
-
-    statusElement.className =
-      "status invalid";
-
-    vintedButton.disabled =
-      true;
-
-    return false;
-  }
-
-  isbnInput.value =
-    isbn;
-
-  statusElement.textContent =
-    `ISBN valide : ${isbn}`;
-
-  statusElement.className =
-    "status valid";
-
-  vintedButton.disabled =
-    false;
-
-  return true;
-}
-
-
-function updateISBNStatus() {
-
-  if (!isbnInput.value.trim()) {
-
-    statusElement.textContent =
-      "";
-
-    statusElement.className =
-      "status";
-
-    vintedButton.disabled =
-      true;
-
-    return;
-  }
-
-  setISBN(isbnInput.value);
-}
-
-
-// =====================================================
-// VINTED
-// =====================================================
-
-function searchVinted(value) {
-
-  const isbn =
-    normalizeISBN(value);
-
-  if (!isbn) {
-    return;
-  }
-
-  addToHistory(isbn);
-
-  const url =
-    "https://www.vinted.fr/catalog?search_text=" +
-    encodeURIComponent(isbn);
-
-  window.open(
-    url,
-    "_blank"
-  );
-}
-
-
-// =====================================================
-// HISTORIQUE
-// =====================================================
-
-function getHistory() {
-
-  try {
-
-    return JSON.parse(
-      localStorage.getItem(
-        HISTORY_KEY
-      )
-    ) || [];
-
-  } catch {
-
-    return [];
-  }
-}
-
-
-function saveHistory(history) {
-
-  localStorage.setItem(
-    HISTORY_KEY,
-    JSON.stringify(history)
-  );
-}
-
-
-function addToHistory(isbn) {
-
-  let history =
-    getHistory();
-
-  history =
-    history.filter(
-      item => item !== isbn
-    );
-
-  history.unshift(isbn);
-
-  history =
-    history.slice(0, 10);
-
-  saveHistory(history);
-
-  renderHistory();
-}
-
-
-function renderHistory() {
-
-  const history =
-    getHistory();
-
-  if (!history.length) {
-
-    historyElement.innerHTML =
-      `<p class="empty-history">
-        Aucun scan pour le moment.
-      </p>`;
-
-    return;
-  }
-
-  historyElement.innerHTML =
-    "";
-
-  history.forEach(isbn => {
-
-    const item =
-      document.createElement("div");
-
-    item.className =
-      "history-item";
-
-
-    const text =
-      document.createElement("span");
-
-    text.className =
-      "history-isbn";
-
-    text.textContent =
-      isbn;
-
-
-    const button =
-      document.createElement("button");
-
-    button.className =
-      "history-search";
-
-    button.textContent =
-      "Vinted";
-
-    button.addEventListener(
-      "click",
-      () => searchVinted(isbn)
-    );
-
-
-    item.appendChild(text);
-
-    item.appendChild(button);
-
-    historyElement.appendChild(item);
-  });
-}
-
-
-// =====================================================
-// CAMERA
-// =====================================================
-
-async function startCamera() {
-
-  if (cameraRunning) {
-    return;
-  }
-
-  processing = false;
-
-
-  try {
-
-    cameraStream =
-      await navigator.mediaDevices.getUserMedia({
-
-        audio: false,
-
-        video: {
-
-          facingMode: {
-            ideal: "environment"
-          },
-
-          width: {
-            ideal: 1920
-          },
-
-          height: {
-            ideal: 1080
-          },
-
-          frameRate: {
-            ideal: 30
-          }
-        }
-      });
-
-
-    video.srcObject =
-      cameraStream;
-
-    await video.play();
-
-
-    cameraRunning =
-      true;
-
-
-    cameraContainer.classList.remove(
-      "hidden"
-    );
-
-    placeholder.classList.add(
-      "hidden"
-    );
-
-    startButton.classList.add(
-      "hidden"
-    );
-
-    photoButton.classList.add(
-      "hidden"
-    );
-
-    captureButton.classList.remove(
-      "hidden"
-    );
-
-    stopButton.classList.remove(
-      "hidden"
-    );
-
-
-    initializeBarcodeDetector();
-
-    /*
-     * On tente une détection automatique
-     * toutes les 500 ms.
-     */
-
-    detectionTimer =
-      setInterval(
-        detectLiveFrame,
-        500
-      );
-
-
-  } catch (error) {
-
-    console.error(
-      "Erreur caméra :",
-      error
-    );
-
-    alert(
-      "Impossible d'accéder à la caméra.\n\n" +
-      "Vérifie que le navigateur a l'autorisation " +
-      "d'utiliser la caméra."
-    );
-  }
-}
-
-
-function stopCamera() {
-
-  if (detectionTimer) {
-
-    clearInterval(
-      detectionTimer
-    );
-
-    detectionTimer =
-      null;
-  }
-
-
-  if (cameraStream) {
-
-    cameraStream
-      .getTracks()
-      .forEach(
-        track => track.stop()
-      );
-
-    cameraStream =
-      null;
-  }
-
-
-  video.srcObject =
-    null;
-
-  cameraRunning =
-    false;
-
-  processing =
-    false;
-
-
-  cameraContainer.classList.add(
-    "hidden"
-  );
-
-  placeholder.classList.remove(
-    "hidden"
-  );
-
-  startButton.classList.remove(
-    "hidden"
-  );
-
-  photoButton.classList.remove(
-    "hidden"
-  );
-
-  captureButton.classList.add(
-    "hidden"
-  );
-
-  stopButton.classList.add(
-    "hidden"
-  );
-}
-
-
-// =====================================================
-// BARCODE DETECTOR NATIF
-// =====================================================
-
-function initializeBarcodeDetector() {
-
-  if (
-    !("BarcodeDetector" in window)
-  ) {
-
-    barcodeDetector =
-      null;
-
-    console.log(
-      "BarcodeDetector non disponible."
-    );
-
-    return;
-  }
-
-
-  try {
-
-    barcodeDetector =
-      new BarcodeDetector({
-
-        formats: [
-          "ean_13",
-          "ean_8",
-          "upc_a",
-          "upc_e",
-          "code_128"
-        ]
-
-      });
-
-  } catch (error) {
-
-    console.warn(
-      "BarcodeDetector indisponible :",
-      error
-    );
-
-    barcodeDetector =
-      null;
-  }
-}
-
-
-// =====================================================
-// DETECTION IMAGE CAMERA
-// =====================================================
-
-async function detectLiveFrame() {
-
-  if (
-    !cameraRunning ||
-    processing ||
-    video.readyState < 2
-  ) {
-    return;
-  }
-
-
-  /*
-   * Première méthode :
-   * BarcodeDetector natif.
-   */
-
-  if (barcodeDetector) {
-
-    try {
-
-      const results =
-        await barcodeDetector.detect(
-          video
-        );
-
-
-      for (
-        const result
-        of results
-      ) {
-
-        const isbn =
-          normalizeISBN(
-            result.rawValue
-          );
-
-        if (isbn) {
-
-          onISBNFound(
-            isbn,
-            "Code-barres détecté"
-          );
-
-          return;
-        }
-      }
-
-    } catch (error) {
-
-      console.warn(
-        "Erreur BarcodeDetector",
-        error
-      );
-    }
-  }
-}
-
-
-// =====================================================
-// CAPTURE PHOTO CAMERA
-// =====================================================
-
-captureButton.addEventListener(
-  "click",
-  async () => {
-
-    if (
-      !cameraRunning ||
-      processing
-    ) {
-      return;
-    }
-
-    await captureAndAnalyze();
-  }
-);
-
-
-async function captureAndAnalyze() {
-
-  processing = true;
-
-  showAnalysis(
-    "Analyse de la photo...",
-    "Recherche du code-barres."
-  );
-
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-
-  /*
-   * On récupère la vraie résolution
-   * du flux caméra.
-   */
-
-  canvas.width =
-    video.videoWidth;
-
-  canvas.height =
-    video.videoHeight;
-
-
-  const context =
-    canvas.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
-
-
-  /*
-   * Capture haute résolution.
-   */
-
-  context.drawImage(
-    video,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  /*
-   * On transforme le canvas en fichier.
-   */
-
-  const blob =
-    await new Promise(
-      resolve =>
-        canvas.toBlob(
-          resolve,
-          "image/jpeg",
-          0.95
-        )
-    );
-
-
-  if (!blob) {
-
-    processing = false;
-
-    hideAnalysis();
-
-    return;
-  }
-
-
-  /*
-   * On analyse l'image.
-   */
-
-  await analyzeImage(
-    blob
-  );
-
-  processing = false;
-}
-
-
-// =====================================================
-// PHOTO DEPUIS TELEPHONE
-// =====================================================
-
-photoButton.addEventListener(
-  "click",
-  () => {
-
-    photoInput.value =
-      "";
-
-    photoInput.click();
-  }
-);
-
-
-photoInput.addEventListener(
-  "change",
-  async event => {
-
-    const file =
-      event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    await analyzeImage(file);
-  }
-);
-
-
-// =====================================================
-// ANALYSE IMAGE
-// =====================================================
-
-async function analyzeImage(file) {
-
-  processing = true;
-
-
-  showAnalysis(
-    "Analyse de la photo...",
-    "Étape 1/3 : recherche du code-barres."
-  );
-
-
-  /*
-   * =========================================
-   * ÉTAPE 1
-   * BarcodeDetector
-   * =========================================
-   */
-
-  const nativeResult =
-    await detectBarcodeFromImage(
-      file
-    );
-
-
-  if (nativeResult) {
-
-    const isbn =
-      normalizeISBN(
-        nativeResult
-      );
-
-    if (isbn) {
-
-      onISBNFound(
-        isbn,
-        "Code-barres détecté"
-      );
-
-      processing = false;
-
-      return;
-    }
-  }
-
-
-  /*
-   * =========================================
-   * ÉTAPE 2
-   * html5-qrcode
-   * =========================================
-   */
-
-  showAnalysis(
-    "Analyse du code-barres...",
-    "Étape 2/3 : lecture de l'image."
-  );
-
-
-  const qrResult =
-    await detectWithHtml5Qr(
-      file
-    );
-
-
-  if (qrResult) {
-
-    const isbn =
-      normalizeISBN(
-        qrResult
-      );
-
-    if (isbn) {
-
-      onISBNFound(
-        isbn,
-        "Code-barres détecté"
-      );
-
-      processing = false;
-
-      return;
-    }
-  }
-
-
-  /*
-   * =========================================
-   * ÉTAPE 3
-   * OCR
-   * =========================================
-   */
-
-  showAnalysis(
-    "Lecture des chiffres...",
-    "Étape 3/3 : recherche de l'ISBN imprimé."
-  );
-
-
-  const ocrResult =
-    await runOCR(file);
-
-
-  const isbn =
-    findISBNInText(
-      ocrResult
-    );
-
-
-  if (isbn) {
-
-    onISBNFound(
-      isbn,
-      "ISBN lu sur la photo"
-    );
-
-    processing = false;
-
-    return;
-  }
-
-
-  /*
-   * ÉCHEC
-   */
-
-  hideAnalysis();
-
-  statusElement.textContent =
-    "ISBN non détecté. Essaie une photo plus proche et bien nette du code-barres.";
-
-  statusElement.className =
-    "status invalid";
-
-  processing = false;
-}
-
-
-// =====================================================
-// BARCODE DETECTOR SUR IMAGE
-// =====================================================
-
-async function detectBarcodeFromImage(file) {
-
-  if (
-    !("BarcodeDetector" in window)
-  ) {
-    return null;
-  }
-
-
-  try {
-
-    const bitmap =
-      await createImageBitmap(
-        file
-      );
-
-
-    if (!barcodeDetector) {
-      initializeBarcodeDetector();
-    }
-
-
-    if (!barcodeDetector) {
-      return null;
-    }
-
-
-    const results =
-      await barcodeDetector.detect(
-        bitmap
-      );
-
-
-    for (
-      const result
-      of results
-    ) {
-
-      const value =
-        result.rawValue;
-
-      if (normalizeISBN(value)) {
-
-        return value;
-      }
-    }
-
-
-  } catch (error) {
-
-    console.warn(
-      "BarcodeDetector image error:",
-      error
-    );
-  }
-
-
-  return null;
-}
-
-
-// =====================================================
-// HTML5 QR
-// =====================================================
-
-async function detectWithHtml5Qr(file) {
-
-  if (
-    typeof Html5Qrcode ===
-    "undefined"
-  ) {
-    return null;
-  }
-
-
-  const id =
-    "temporary-barcode-reader-" +
-    Date.now();
-
-
-  const element =
-    document.createElement(
-      "div"
-    );
-
-  element.id =
-    id;
-
-  element.style.display =
-    "none";
-
-  document.body.appendChild(
-    element
-  );
-
-
-  const scanner =
-    new Html5Qrcode(id);
-
-
-  try {
-
-    const result =
-      await scanner.scanFile(
-        file,
-        false
-      );
-
-
-    try {
-      await scanner.clear();
-    } catch {}
-
-
-    element.remove();
-
-    return result;
-
-
-  } catch (error) {
-
-    try {
-      await scanner.clear();
-    } catch {}
-
-    element.remove();
-
-    return null;
-  }
-}
-
-
-// =====================================================
-// OCR
-// =====================================================
-
-async function runOCR(file) {
-
-  if (
-    typeof Tesseract ===
-    "undefined"
-  ) {
-
-    return "";
-  }
-
-
-  try {
-
-    const result =
-      await Tesseract.recognize(
-        file,
-        "eng",
-        {
-
-          logger: message => {
-
-            if (
-              message.status ===
-              "recognizing text"
-            ) {
-
-              const percent =
-                Math.round(
-                  (message.progress || 0)
-                  * 100
-                );
-
-              analysisText.textContent =
-                `Lecture des chiffres... ${percent}%`;
-            }
-          }
-
-        }
-      );
-
-
-    console.log(
-      "OCR result :",
-      result.data.text
-    );
-
-
-    return result.data.text;
-
-
-  } catch (error) {
-
-    console.error(
-      "OCR error:",
-      error
-    );
-
-    return "";
-  }
-}
-
-
-// =====================================================
-// TROUVER ISBN DANS TEXTE OCR
-// =====================================================
-
-function findISBNInText(text) {
+/**
+ * Cherche un ISBN dans le résultat
+ * fourni par ZXing.
+ */
+function extractISBN(text) {
 
   if (!text) {
     return null;
   }
 
+  const cleaned = cleanISBN(text);
 
-  /*
-   * On corrige quelques erreurs OCR
-   * fréquentes.
-   */
+  /* ISBN-13 */
 
-  const cleaned =
-    text
-      .replace(/[Oo]/g, "0")
-      .replace(/[Il|]/g, "1")
-      .replace(/[Ss]/g, "5");
-
-
-  /*
-   * On récupère toutes les suites
-   * suffisamment longues de chiffres.
-   */
-
-  const candidates =
-    cleaned.match(
-      /(?:97[89][\s-]*)?(?:\d[\s-]*){9,13}/g
-    ) || [];
-
-
-  for (
-    const candidate
-    of candidates
+  if (
+    cleaned.length === 13 &&
+    isValidISBN13(cleaned)
   ) {
+    return cleaned;
+  }
 
-    const isbn =
-      normalizeISBN(
-        candidate
-      );
+  /* ISBN-10 */
 
-    if (isbn) {
-      return isbn;
-    }
+  if (
+    cleaned.length === 10 &&
+    isValidISBN10(cleaned)
+  ) {
+    return isbn10To13(cleaned);
   }
 
 
   /*
-   * Deuxième tentative :
-   * on extrait uniquement les chiffres
-   * de chaque ligne.
+   * Certains lecteurs peuvent retourner
+   * un texte contenant plusieurs informations.
+   *
+   * On cherche donc des groupes de 13 chiffres.
    */
 
-  const lines =
-    cleaned.split("\n");
+  const matches =
+    text.match(/\d{13}/g);
+
+  if (matches) {
+
+    for (const candidate of matches) {
+
+      if (isValidISBN13(candidate)) {
+        return candidate;
+      }
+
+    }
+
+  }
 
 
-  for (
-    const line
-    of lines
-  ) {
+  /*
+   * Puis ISBN-10.
+   */
 
-    const digits =
-      line.replace(
-        /[^0-9Xx]/g,
-        ""
-      );
+  const matches10 =
+    text.match(/\d{9}[\dXx]/g);
+
+  if (matches10) {
+
+    for (const candidate of matches10) {
+
+      const isbn =
+        candidate.toUpperCase();
+
+      if (isValidISBN10(isbn)) {
+        return isbn10To13(isbn);
+      }
+
+    }
+
+  }
+
+  return null;
+
+}
+
+
+/**
+ * Affiche un ISBN dans l'interface.
+ */
+function setISBN(isbn) {
+
+  isbnInput.value = isbn;
+
+  resultStatus.textContent =
+    "ISBN détecté : " + isbn;
+
+  resultStatus.className =
+    "status success";
+
+  vintedButton.disabled = false;
+  googleButton.disabled = false;
+
+}
+
+
+/**
+ * Réinitialise le résultat.
+ */
+function clearISBN() {
+
+  isbnInput.value = "";
+
+  vintedButton.disabled = true;
+  googleButton.disabled = true;
+
+}
+
+
+/* =====================================================
+   CAMÉRA
+   ===================================================== */
+
+
+/**
+ * Démarre la caméra.
+ */
+async function startCamera() {
+
+  if (!codeReader) {
+
+    cameraStatus.textContent =
+      "Le lecteur de code-barres n'est pas disponible.";
+
+    cameraStatus.className =
+      "status error";
+
+    return;
+
+  }
+
+
+  try {
+
+    cameraStatus.textContent =
+      "Demande d'accès à la caméra…";
+
+    stream =
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: {
+            ideal: "environment"
+          },
+
+          width: {
+            ideal: 1280
+          },
+
+          height: {
+            ideal: 720
+          }
+        },
+
+        audio: false
+      });
+
+
+    video.srcObject = stream;
+
+    await video.play();
+
+
+    startCameraButton.classList.add("hidden");
+    stopCameraButton.classList.remove("hidden");
+
+
+    cameraStatus.textContent =
+      "Place le code-barres dans le cadre…";
+
+    cameraStatus.className =
+      "status";
 
 
     /*
-     * Un ISBN-13 commence généralement
-     * par 978 ou 979.
+     * Lecture continue.
      */
 
-    if (
-      digits.length >= 13
-    ) {
+    codeReader.decodeFromVideoElement(
+      video,
+      (result, error) => {
 
-      for (
-        let i = 0;
-        i <= digits.length - 13;
-        i++
-      ) {
+        if (result) {
 
-        const candidate =
-          digits.substring(
-            i,
-            i + 13
+          const raw =
+            result.getText();
+
+          console.log(
+            "Code détecté :",
+            raw
           );
 
-        const isbn =
-          normalizeISBN(
-            candidate
-          );
+          const isbn =
+            extractISBN(raw);
 
-        if (isbn) {
-          return isbn;
+          if (isbn) {
+
+            setISBN(isbn);
+
+            cameraStatus.textContent =
+              "✓ ISBN trouvé !";
+
+            cameraStatus.className =
+              "status success";
+
+            stopCamera();
+
+          } else {
+
+            cameraStatus.textContent =
+              "Code détecté mais ce n'est pas un ISBN.";
+
+          }
+
         }
+
       }
-    }
-  }
-
-
-  return null;
-}
-
-
-// =====================================================
-// ISBN TROUVE
-// =====================================================
-
-function onISBNFound(
-  isbn,
-  message
-) {
-
-  console.log(
-    "ISBN trouvé :",
-    isbn
-  );
-
-
-  stopCamera();
-
-  hideAnalysis();
-
-  isbnInput.value =
-    isbn;
-
-
-  statusElement.textContent =
-    `${message} : ${isbn}`;
-
-  statusElement.className =
-    "status valid";
-
-
-  vintedButton.disabled =
-    false;
-
-
-  /*
-   * Petit feedback visuel.
-   */
-
-  if (
-    navigator.vibrate
-  ) {
-
-    navigator.vibrate(
-      [80, 50, 80]
     );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    cameraStatus.textContent =
+      "Impossible d'accéder à la caméra. Vérifie les autorisations.";
+
+    cameraStatus.className =
+      "status error";
+
   }
 
-
-  /*
-   * On met le focus sur le bouton.
-   */
-
-  setTimeout(
-    () => {
-      vintedButton.focus();
-    },
-    100
-  );
 }
 
 
-// =====================================================
-// ANALYSE UI
-// =====================================================
+/**
+ * Arrête la caméra.
+ */
+function stopCamera() {
 
-function showAnalysis(
-  title,
-  text
-) {
+  if (stream) {
 
-  analysisTitle.textContent =
-    title;
+    stream
+      .getTracks()
+      .forEach(track => track.stop());
 
-  analysisText.textContent =
-    text;
+    stream = null;
 
-  analysisCard.classList.remove(
-    "hidden"
-  );
-}
-
-
-function hideAnalysis() {
-
-  analysisCard.classList.add(
-    "hidden"
-  );
-}
-
-
-// =====================================================
-// EVENTS
-// =====================================================
-
-startButton.addEventListener(
-  "click",
-  startCamera
-);
-
-
-stopButton.addEventListener(
-  "click",
-  stopCamera
-);
-
-
-isbnInput.addEventListener(
-  "input",
-  () => {
-
-    isbnInput.value =
-      isbnInput.value.replace(
-        /[^0-9Xx-]/g,
-        ""
-      );
-
-    updateISBNStatus();
   }
-);
+
+  video.srcObject = null;
+
+  startCameraButton.classList.remove("hidden");
+  stopCameraButton.classList.add("hidden");
+
+}
 
 
-isbnInput.addEventListener(
-  "keydown",
+/* =====================================================
+   PHOTO + CROP
+   ===================================================== */
+
+
+/**
+ * Lorsqu'une photo est sélectionnée.
+ */
+imageInput.addEventListener(
+  "change",
   event => {
 
-    if (
-      event.key === "Enter"
-    ) {
+    const file =
+      event.target.files[0];
 
-      const isbn =
-        normalizeISBN(
-          isbnInput.value
+    if (!file) {
+      return;
+    }
+
+
+    const url =
+      URL.createObjectURL(file);
+
+    cropImage.src = url;
+
+    cropSection.classList.remove("hidden");
+
+
+    /*
+     * Détruire l'ancien Cropper.
+     */
+
+    if (cropper) {
+
+      cropper.destroy();
+      cropper = null;
+
+    }
+
+
+    cropImage.onload = () => {
+
+      cropper =
+        new Cropper(
+          cropImage,
+          {
+            viewMode: 1,
+
+            autoCropArea: 0.8,
+
+            responsive: true,
+
+            background: false,
+
+            movable: true,
+
+            zoomable: true,
+
+            rotatable: false,
+
+            scalable: false
+          }
         );
 
-      if (isbn) {
-        searchVinted(isbn);
-      }
-    }
+    };
+
   }
 );
 
 
-clearButton.addEventListener(
+/**
+ * Analyse la zone recadrée.
+ */
+scanCropButton.addEventListener(
   "click",
-  () => {
+  async () => {
 
-    isbnInput.value =
-      "";
+    if (!cropper) {
 
-    updateISBNStatus();
+      resultStatus.textContent =
+        "Aucune image à analyser.";
 
-    isbnInput.focus();
+      resultStatus.className =
+        "status error";
+
+      return;
+
+    }
+
+
+    scanCropButton.disabled = true;
+
+    scanCropButton.textContent =
+      "🔎 Analyse…";
+
+
+    try {
+
+      /*
+       * On demande à Cropper.js
+       * de générer l'image recadrée.
+       */
+
+      const canvas =
+        cropper.getCroppedCanvas({
+          width: 1600,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: "high"
+        });
+
+
+      /*
+       * Transformer le canvas en image.
+       */
+
+      const croppedImage =
+        new Image();
+
+      croppedImage.src =
+        canvas.toDataURL("image/jpeg", 0.95);
+
+
+      await new Promise(resolve => {
+        croppedImage.onload = resolve;
+      });
+
+
+      /*
+       * ZXing analyse l'image.
+       */
+
+      const result =
+        await codeReader.decodeFromImageElement(
+          croppedImage
+        );
+
+
+      const raw =
+        result.getText();
+
+      console.log(
+        "Résultat photo :",
+        raw
+      );
+
+
+      const isbn =
+        extractISBN(raw);
+
+
+      if (isbn) {
+
+        setISBN(isbn);
+
+      } else {
+
+        resultStatus.textContent =
+          "Un code a été trouvé, mais il ne semble pas être un ISBN.";
+
+        resultStatus.className =
+          "status error";
+
+      }
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      resultStatus.textContent =
+        "Impossible de lire le code. Essaie de recadrer plus précisément le code-barres.";
+
+      resultStatus.className =
+        "status error";
+
+    }
+
+
+    scanCropButton.disabled = false;
+
+    scanCropButton.textContent =
+      "🔎 Lire le code-barres";
+
   }
 );
 
 
+/* =====================================================
+   COPIE
+   ===================================================== */
+
+copyButton.addEventListener(
+  "click",
+  async () => {
+
+    const isbn =
+      isbnInput.value.trim();
+
+    if (!isbn) {
+      return;
+    }
+
+    try {
+
+      await navigator.clipboard.writeText(
+        isbn
+      );
+
+      resultStatus.textContent =
+        "✓ ISBN copié !";
+
+      resultStatus.className =
+        "status success";
+
+    } catch (error) {
+
+      /*
+       * Fallback pour certains navigateurs.
+       */
+
+      isbnInput.select();
+
+      document.execCommand("copy");
+
+      resultStatus.textContent =
+        "✓ ISBN copié !";
+
+      resultStatus.className =
+        "status success";
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   RECHERCHES
+   ===================================================== */
+
+
+/**
+ * Récupère l'ISBN actuellement présent
+ * dans le champ.
+ */
+function getCurrentISBN() {
+
+  const isbn =
+    cleanISBN(isbnInput.value);
+
+  return isbn;
+
+}
+
+
+/**
+ * Recherche Vinted.
+ */
 vintedButton.addEventListener(
   "click",
   () => {
 
     const isbn =
-      normalizeISBN(
-        isbnInput.value
-      );
+      getCurrentISBN();
 
-    if (isbn) {
-      searchVinted(isbn);
+    if (!isbn) {
+      return;
     }
+
+
+    const url =
+      "https://www.vinted.fr/catalog?search_text=" +
+      encodeURIComponent(isbn);
+
+
+    window.open(
+      url,
+      "_blank"
+    );
+
   }
 );
 
 
-clearHistoryButton.addEventListener(
+/**
+ * Recherche Google.
+ */
+googleButton.addEventListener(
   "click",
   () => {
 
-    localStorage.removeItem(
-      HISTORY_KEY
+    const isbn =
+      getCurrentISBN();
+
+    if (!isbn) {
+      return;
+    }
+
+
+    const url =
+      "https://www.google.com/search?q=" +
+      encodeURIComponent(isbn);
+
+
+    window.open(
+      url,
+      "_blank"
     );
 
-    renderHistory();
   }
 );
 
 
-// =====================================================
-// INIT
-// =====================================================
+/* =====================================================
+   MODIFICATION MANUELLE DE L'ISBN
+===================================================== */
 
-renderHistory();
+isbnInput.addEventListener(
+  "input",
+  () => {
 
-updateISBNStatus();
+    const isbn =
+      getCurrentISBN();
+
+    /*
+     * On autorise la recherche même si
+     * l'utilisateur a corrigé manuellement
+     * l'ISBN.
+     */
+
+    const valid =
+      isbn.length === 10 ||
+      isbn.length === 13;
+
+    vintedButton.disabled = !valid;
+    googleButton.disabled = !valid;
+
+  }
+);
+
+
+/* =====================================================
+   ÉVÉNEMENTS
+===================================================== */
+
+startCameraButton.addEventListener(
+  "click",
+  startCamera
+);
+
+stopCameraButton.addEventListener(
+  "click",
+  stopCamera
+);
+
+
+/*
+ * Nettoyage lorsque l'utilisateur
+ * quitte la page.
+ */
+
+window.addEventListener(
+  "beforeunload",
+  stopCamera
+);
