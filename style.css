@@ -7,6 +7,7 @@
   --muted: #757575;
   --border: #dddddd;
   --danger: #d8232f;
+  --success: #16834b;
 }
 
 * {
@@ -15,8 +16,10 @@
 
 body {
   margin: 0;
+
   background: var(--background);
   color: var(--text);
+
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -39,9 +42,12 @@ button {
 .app {
   width: 100%;
   max-width: 520px;
+
   margin: 0 auto;
+
   padding: 20px 16px 40px;
 }
+
 
 /* =========================
    HEADER
@@ -53,16 +59,21 @@ button {
 
 .header h1 {
   margin: 0;
+
   font-size: 28px;
   font-weight: 750;
+
   letter-spacing: -0.5px;
 }
 
 .header p {
   margin: 5px 0 0;
+
   color: var(--muted);
+
   font-size: 15px;
 }
+
 
 /* =========================
    CARDS
@@ -70,13 +81,20 @@ button {
 
 .scanner-card,
 .result-card,
-.history-card {
+.history-card,
+.analysis-card {
   background: var(--card);
+
   border-radius: 16px;
+
   padding: 16px;
+
   margin-bottom: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.05);
 }
+
 
 /* =========================
    SCANNER
@@ -84,40 +102,59 @@ button {
 
 #reader {
   display: none;
+
   width: 100%;
+
   overflow: hidden;
+
   border-radius: 12px;
 }
 
 #reader video {
   width: 100% !important;
   height: auto !important;
+
   border-radius: 12px;
 }
 
 .scanner-placeholder {
-  height: 260px;
+  height: 250px;
+
   border: 2px dashed var(--border);
+
   border-radius: 12px;
 
   display: flex;
+
   flex-direction: column;
+
   justify-content: center;
+
   align-items: center;
 
   color: var(--muted);
+
   text-align: center;
+}
+
+.scanner-placeholder strong {
+  color: var(--text);
+
+  font-size: 17px;
+}
+
+.scanner-placeholder p {
+  margin: 7px 0 0;
+
+  font-size: 14px;
 }
 
 .camera-icon {
   font-size: 52px;
+
   margin-bottom: 10px;
 }
 
-.scanner-placeholder p {
-  margin: 0;
-  font-size: 14px;
-}
 
 /* =========================
    BUTTONS
@@ -127,15 +164,21 @@ button {
 .secondary-button,
 .vinted-button {
   width: 100%;
+
   min-height: 52px;
+
   border: 0;
+
   border-radius: 10px;
+
   font-weight: 700;
+
   margin-top: 12px;
 }
 
 .primary-button {
   background: var(--vinted-green);
+
   color: white;
 }
 
@@ -145,19 +188,24 @@ button {
 
 .secondary-button {
   background: #eeeeee;
+
   color: var(--text);
 }
 
 .vinted-button {
   background: var(--vinted-green);
+
   color: white;
+
   font-size: 16px;
 }
 
 .vinted-button:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
+
   cursor: not-allowed;
 }
+
 
 /* =========================
    ISBN
@@ -165,67 +213,136 @@ button {
 
 .result-card label {
   display: block;
+
   font-size: 14px;
+
   font-weight: 700;
+
   margin-bottom: 7px;
 }
 
 .isbn-row {
   position: relative;
+
   display: flex;
+
   align-items: center;
 }
 
 #isbn {
   width: 100%;
-  height: 52px;
-  padding: 0 45px 0 14px;
 
-  border: 1px solid var(--border);
+  height: 52px;
+
+  padding:
+    0 45px
+    0 14px;
+
+  border:
+    1px solid var(--border);
+
   border-radius: 10px;
 
   font-size: 18px;
+
   letter-spacing: 0.5px;
+
   outline: none;
 }
 
 #isbn:focus {
   border-color: var(--vinted-green);
-  box-shadow: 0 0 0 2px rgba(0, 119, 130, 0.12);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(0, 119, 130, 0.12);
 }
 
 .clear-button {
   position: absolute;
+
   right: 7px;
 
   width: 38px;
   height: 38px;
 
   border: 0;
+
   border-radius: 50%;
 
   background: #eeeeee;
+
   color: #555;
 
   font-size: 24px;
+
   line-height: 1;
 }
 
 .status {
   min-height: 18px;
-  margin: 7px 2px 0;
+
+  margin:
+    7px 2px 0;
 
   font-size: 13px;
+
   color: var(--muted);
 }
 
 .status.valid {
-  color: var(--vinted-green);
+  color: var(--success);
 }
 
 .status.invalid {
   color: var(--danger);
 }
+
+
+/* =========================
+   ANALYSE
+========================= */
+
+.analysis-card {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+}
+
+.analysis-card p {
+  margin: 4px 0 0;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+
+  flex-shrink: 0;
+
+  border:
+    3px solid #e5e5e5;
+
+  border-top-color:
+    var(--vinted-green);
+
+  border-radius: 50%;
+
+  animation:
+    spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 
 /* =========================
    HISTORY
@@ -233,20 +350,27 @@ button {
 
 .section-title {
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
 }
 
 .section-title h2 {
   margin: 0;
+
   font-size: 18px;
 }
 
 .section-title button {
   border: 0;
+
   background: transparent;
+
   color: var(--vinted-green);
+
   font-size: 13px;
+
   font-weight: 700;
 }
 
@@ -256,36 +380,48 @@ button {
 
 .history-item {
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
 
   padding: 12px 0;
 
-  border-top: 1px solid #eeeeee;
+  border-top:
+    1px solid #eeeeee;
 }
 
 .history-isbn {
   font-size: 15px;
+
   font-weight: 600;
 }
 
 .history-search {
   border: 0;
+
   background: #e7f5f6;
+
   color: var(--vinted-green);
 
-  padding: 8px 11px;
+  padding:
+    8px 11px;
+
   border-radius: 8px;
 
   font-size: 13px;
+
   font-weight: 700;
 }
 
 .empty-history {
   margin: 12px 0 0;
+
   color: var(--muted);
+
   font-size: 14px;
 }
+
 
 /* =========================
    FOOTER
@@ -293,10 +429,14 @@ button {
 
 footer {
   text-align: center;
+
   color: #999;
+
   font-size: 12px;
+
   padding-top: 10px;
 }
+
 
 /* =========================
    UTILITIES
@@ -306,11 +446,13 @@ footer {
   display: none !important;
 }
 
+
 /* =========================
    DESKTOP
 ========================= */
 
 @media (min-width: 700px) {
+
   .app {
     padding-top: 40px;
   }
