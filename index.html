@@ -3,208 +3,158 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#007782">
 
-  <title>ISBN Research</title>
+  <title>ISBN Scanner</title>
 
   <link rel="stylesheet" href="style.css">
 
-  <!-- Détection code-barres de secours -->
-  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <!-- ZXing : lecture des codes-barres -->
+  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
 
-  <!-- OCR de secours ultime -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-
-  <script src="app.js" defer></script>
+  <!-- Cropper.js : recadrage des photos -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"
+  >
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 </head>
 
 <body>
 
-<main class="app">
+  <main class="app">
 
-  <header class="header">
-    <h1>ISBN Research</h1>
-    <p>Scanne un livre pour trouver ses annonces</p>
-  </header>
+    <header>
+      <h1>📚 ISBN Scanner</h1>
+      <p>Scanne un livre pour comparer rapidement son prix.</p>
+    </header>
 
+    <!-- ========================= -->
+    <!-- SCAN CAMÉRA -->
+    <!-- ========================= -->
 
-  <!-- =========================
-       SCANNER
-  ========================== -->
+    <section class="card">
 
-  <section class="scanner-card">
+      <h2>1. Scanner</h2>
 
-    <div id="camera-container" class="camera-container hidden">
+      <div class="scanner-container">
+        <video id="video" autoplay muted playsinline></video>
 
-      <video
-        id="camera-video"
-        autoplay
-        muted
-        playsinline>
-      </video>
-
-      <div class="scan-overlay">
-        <div class="scan-box">
-          <div class="scan-line"></div>
-        </div>
-
-        <p>
-          Place le code-barres dans le cadre
-        </p>
+        <div class="scan-frame"></div>
       </div>
 
-    </div>
+      <div class="buttons">
+
+        <button id="startCamera" class="primary">
+          📷 Démarrer le scanner
+        </button>
+
+        <button id="stopCamera" class="secondary hidden">
+          ⏹ Arrêter
+        </button>
+
+      </div>
+
+      <p id="cameraStatus" class="status"></p>
+
+    </section>
 
 
-    <div
-      id="scanner-placeholder"
-      class="scanner-placeholder">
+    <!-- ========================= -->
+    <!-- PHOTO -->
+    <!-- ========================= -->
 
-      <div class="camera-icon">📚</div>
+    <section class="card">
 
-      <strong>Scanner un livre</strong>
+      <h2>Ou utiliser une photo</h2>
 
-      <p>
-        Cadre le code-barres dans la zone
-      </p>
-
-    </div>
-
-
-    <button
-      id="start-scanner"
-      class="primary-button">
-      📷 Scanner avec la caméra
-    </button>
-
-
-    <button
-      id="capture-button"
-      class="capture-button hidden">
-      📸 Capturer le code-barres
-    </button>
-
-
-    <button
-      id="photo-button"
-      class="secondary-button">
-      🖼️ Choisir / prendre une photo
-    </button>
-
-
-    <button
-      id="stop-scanner"
-      class="secondary-button hidden">
-      ✕ Arrêter
-    </button>
-
-
-    <input
-      id="photo-input"
-      type="file"
-      accept="image/*"
-      capture="environment"
-      hidden>
-
-  </section>
-
-
-  <!-- =========================
-       ANALYSE
-  ========================== -->
-
-  <section
-    id="analysis-card"
-    class="analysis-card hidden">
-
-    <div class="spinner"></div>
-
-    <div>
-      <strong id="analysis-title">
-        Analyse...
-      </strong>
-
-      <p id="analysis-text">
-        Recherche du code-barres.
-      </p>
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       RESULTAT
-  ========================== -->
-
-  <section class="result-card">
-
-    <label for="isbn">
-      ISBN
-    </label>
-
-    <div class="isbn-row">
+      <label for="imageInput" class="upload-button">
+        📸 Prendre une photo / choisir une image
+      </label>
 
       <input
-        id="isbn"
-        type="text"
-        inputmode="numeric"
-        autocomplete="off"
-        placeholder="978XXXXXXXXXX"
-        maxlength="17">
+        type="file"
+        id="imageInput"
+        accept="image/*"
+        capture="environment"
+      >
 
-      <button
-        id="clear-isbn"
-        class="clear-button">
-        ×
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- RECADRAGE -->
+    <!-- ========================= -->
+
+    <section id="cropSection" class="card hidden">
+
+      <h2>2. Recadrer</h2>
+
+      <p class="help">
+        Sélectionne uniquement la zone contenant le code-barres.
+        Évite autant que possible le prix et les autres textes.
+      </p>
+
+      <div class="crop-container">
+        <img id="cropImage" alt="Image à recadrer">
+      </div>
+
+      <button id="scanCrop" class="primary">
+        🔎 Lire le code-barres
       </button>
 
-    </div>
-
-    <p
-      id="isbn-status"
-      class="status">
-    </p>
+    </section>
 
 
-    <button
-      id="vinted-search"
-      class="vinted-button"
-      disabled>
-      🔎 Rechercher sur Vinted
-    </button>
+    <!-- ========================= -->
+    <!-- RÉSULTAT -->
+    <!-- ========================= -->
 
-  </section>
+    <section class="card result-card">
+
+      <h2>3. ISBN</h2>
+
+      <div class="isbn-row">
+
+        <input
+          type="text"
+          id="isbnInput"
+          placeholder="ISBN..."
+          inputmode="numeric"
+          autocomplete="off"
+        >
+
+        <button id="copyButton" title="Copier">
+          📋
+        </button>
+
+      </div>
+
+      <p id="resultStatus" class="status"></p>
+
+      <div class="search-buttons">
+
+        <button id="vintedButton" class="vinted" disabled>
+          🟢 Rechercher sur Vinted
+        </button>
+
+        <button id="googleButton" class="google" disabled>
+          🔵 Rechercher sur Google
+        </button>
+
+      </div>
+
+    </section>
 
 
-  <!-- =========================
-       HISTORIQUE
-  ========================== -->
+    <footer>
+      <p>
+        Les recherches sont effectuées directement dans ton navigateur.
+      </p>
+    </footer>
 
-  <section class="history-card">
+  </main>
 
-    <div class="section-title">
-
-      <h2>Derniers scans</h2>
-
-      <button id="clear-history">
-        Effacer
-      </button>
-
-    </div>
-
-    <div
-      id="history"
-      class="history-list">
-    </div>
-
-  </section>
-
-
-  <footer>
-    ISBN Research · Application personnelle
-  </footer>
-
-</main>
+  <script src="script.js"></script>
 
 </body>
 </html>
