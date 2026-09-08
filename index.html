@@ -44,7 +44,6 @@
         max(20px, env(safe-area-inset-bottom));
     }
 
-
     .app {
       width: 100%;
       max-width: 430px;
@@ -61,12 +60,10 @@
       text-align: center;
     }
 
-
     .logo {
       font-size: 52px;
       margin-bottom: 8px;
     }
-
 
     h1 {
       margin: 0;
@@ -74,7 +71,6 @@
       font-size: 28px;
       font-weight: 700;
     }
-
 
     .subtitle {
       margin: 8px 0 22px;
@@ -106,7 +102,6 @@
       margin-bottom: 12px;
     }
 
-
     #video {
 
       display: block;
@@ -122,22 +117,23 @@
 
 
     /*
-     * Cadre de visée.
+     * Zone de visée.
      *
-     * Il est volontairement horizontal,
-     * comme les codes-barres ISBN.
+     * IMPORTANT :
+     * on prend une zone assez large verticalement.
+     * Le recadrage réel sera effectué après la capture.
      */
 
     .scan-frame {
 
       position: absolute;
 
-      left: 6%;
-      right: 6%;
+      left: 5%;
+      right: 5%;
 
-      top: 35%;
+      top: 30%;
 
-      height: 30%;
+      height: 40%;
 
       border: 3px solid #00a88f;
 
@@ -148,7 +144,6 @@
 
       pointer-events: none;
     }
-
 
     .scan-line {
 
@@ -170,16 +165,15 @@
         scanLine 1.8s ease-in-out infinite;
     }
 
-
     @keyframes scanLine {
 
       0%,
       100% {
-        transform: translateY(-35px);
+        transform: translateY(-45px);
       }
 
       50% {
-        transform: translateY(35px);
+        transform: translateY(45px);
       }
     }
 
@@ -195,67 +189,6 @@
       font-size: 14px;
 
       line-height: 1.45;
-    }
-
-
-    /* ================================================
-       BOUTONS
-       ================================================ */
-
-    button {
-
-      width: 100%;
-
-      border: none;
-
-      border-radius: 14px;
-
-      padding: 16px 18px;
-
-      margin-top: 10px;
-
-      font-size: 17px;
-
-      font-weight: 600;
-
-      cursor: pointer;
-
-      transition:
-        transform .1s,
-        opacity .2s;
-    }
-
-
-    button:active {
-      transform: scale(.98);
-    }
-
-
-    #scanButton,
-    #captureButton,
-    #vintedButton {
-
-      background: #007782;
-
-      color: white;
-    }
-
-
-    #stopButton,
-    #newScanButton {
-
-      background: #eeeeee;
-
-      color: #333;
-    }
-
-
-    #captureButton,
-    #stopButton,
-    #vintedButton,
-    #newScanButton {
-
-      display: none;
     }
 
 
@@ -297,6 +230,62 @@
     }
 
 
+    /* ================================================
+       BOUTONS
+       ================================================ */
+
+    button {
+
+      width: 100%;
+
+      border: none;
+
+      border-radius: 14px;
+
+      padding: 16px 18px;
+
+      margin-top: 10px;
+
+      font-size: 17px;
+
+      font-weight: 600;
+
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(.98);
+    }
+
+
+    #scanButton,
+    #captureButton,
+    #vintedButton {
+
+      background: #007782;
+
+      color: white;
+    }
+
+
+    #stopButton,
+    #newScanButton {
+
+      background: #eeeeee;
+
+      color: #333;
+    }
+
+
+    #captureButton,
+    #stopButton,
+    #vintedButton,
+    #newScanButton {
+
+      display: none;
+    }
+
+
     .privacy {
 
       margin-top: 24px;
@@ -308,11 +297,6 @@
       line-height: 1.4;
     }
 
-
-    /*
-     * Canvas invisible servant à capturer
-     * une image de la caméra.
-     */
 
     #captureCanvas {
 
@@ -343,13 +327,9 @@
     </p>
 
 
-    <!-- ============================================
-         CAMÉRA
-         ============================================ -->
+    <!-- CAMÉRA -->
 
-    <div
-      id="cameraContainer"
-    >
+    <div id="cameraContainer">
 
       <video
         id="video"
@@ -373,33 +353,25 @@
       class="camera-hint"
     >
 
-      Fais la mise au point sur le code-barres,
-      puis appuie sur <strong>Capturer</strong>.
+      Place le code-barres dans le cadre.<br>
+
+      Fais la mise au point puis appuie sur
+      <strong>Capturer</strong>.
 
     </div>
 
 
-    <!--
-      Canvas invisible.
+    <!-- CANVAS INVISIBLE -->
 
-      Il sert à prendre une photo du flux vidéo.
-    -->
-
-    <canvas
-      id="captureCanvas"
-    ></canvas>
+    <canvas id="captureCanvas"></canvas>
 
 
-    <!-- ============================================
-         ISBN
-         ============================================ -->
+    <!-- ISBN -->
 
     <div id="isbn"></div>
 
 
-    <!-- ============================================
-         BOUTONS
-         ============================================ -->
+    <!-- BOUTONS -->
 
     <button id="scanButton">
       📷 Scanner un livre
@@ -441,22 +413,12 @@
 
   <!--
     html5-qrcode
-
-    La bibliothèque permet également
-    de scanner une image locale.
   -->
 
-  <script
-    src="https://unpkg.com/html5-qrcode">
-  </script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
 
   <script>
-
-
-    // ==================================================
-    // VARIABLES
-    // ==================================================
 
     let stream = null;
 
@@ -466,10 +428,6 @@
 
     let scanning = false;
 
-
-    // ==================================================
-    // ÉLÉMENTS HTML
-    // ==================================================
 
     const video =
       document.getElementById("video");
@@ -516,7 +474,7 @@
 
 
     // ==================================================
-    // ISBN-13
+    // VALIDATION ISBN-13
     // ==================================================
 
     function isValidISBN13(isbn) {
@@ -557,7 +515,6 @@
     // ==================================================
 
     async function startScanner() {
-
 
       if (scanning) {
         return;
@@ -609,11 +566,8 @@
 
 
         /*
-         * Demande classique de caméra arrière.
-         *
-         * Pas de résolution forcée :
-         * on laisse l'iPhone choisir
-         * les meilleures capacités disponibles.
+         * Même accès caméra que la version
+         * qui fonctionnait chez toi.
          */
 
         stream =
@@ -662,11 +616,10 @@
 
 
     // ==================================================
-    // CAPTURE D'UNE IMAGE
+    // CAPTURE
     // ==================================================
 
     async function captureBarcode() {
-
 
       if (!stream || !scanning) {
         return;
@@ -674,25 +627,19 @@
 
 
       message.textContent =
-        "📸 Analyse de l'image…";
+        "📸 Mise au point et capture…";
 
 
       /*
-       * Petite pause.
-
-       * Elle laisse à l'iPhone une fraction
-       * de seconde supplémentaire pour terminer
-       * sa mise au point avant la capture.
+       * Petit délai pour laisser
+       * l'autofocus terminer son travail.
        */
 
       await new Promise(
-        resolve => setTimeout(resolve, 250)
+        resolve =>
+          setTimeout(resolve, 400)
       );
 
-
-      /*
-       * Résolution réelle de la vidéo.
-       */
 
       const width =
         video.videoWidth;
@@ -711,6 +658,10 @@
       }
 
 
+      /*
+       * Image complète.
+       */
+
       canvas.width =
         width;
 
@@ -723,10 +674,6 @@
         canvas.getContext("2d");
 
 
-      /*
-       * Capture de l'image.
-       */
-
       context.drawImage(
         video,
         0,
@@ -737,10 +684,114 @@
 
 
       /*
-       * Conversion en JPEG local.
+       * ------------------------------------------------
+       * RECADRAGE
+       * ------------------------------------------------
+       *
+       * On garde principalement la zone centrale
+       * où se trouve le code-barres.
+       *
+       * On retire une partie des côtés et du haut/bas.
        */
 
-      canvas.toBlob(
+      const cropX =
+        Math.round(width * 0.05);
+
+
+      const cropY =
+        Math.round(height * 0.30);
+
+
+      const cropWidth =
+        Math.round(width * 0.90);
+
+
+      const cropHeight =
+        Math.round(height * 0.40);
+
+
+      const cropCanvas =
+        document.createElement("canvas");
+
+
+      cropCanvas.width =
+        cropWidth;
+
+
+      cropCanvas.height =
+        cropHeight;
+
+
+      const cropContext =
+        cropCanvas.getContext("2d");
+
+
+      cropContext.drawImage(
+
+        canvas,
+
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+
+        0,
+        0,
+        cropWidth,
+        cropHeight
+
+      );
+
+
+      /*
+       * On agrandit également la zone recadrée.
+       *
+       * Cela aide beaucoup lorsque le code-barres
+       * est relativement petit dans l'image.
+       */
+
+      const enlargedCanvas =
+        document.createElement("canvas");
+
+
+      enlargedCanvas.width =
+        cropWidth * 2;
+
+
+      enlargedCanvas.height =
+        cropHeight * 2;
+
+
+      const enlargedContext =
+        enlargedCanvas.getContext("2d");
+
+
+      enlargedContext.imageSmoothingEnabled =
+        false;
+
+
+      enlargedContext.drawImage(
+
+        cropCanvas,
+
+        0,
+        0,
+        cropWidth,
+        cropHeight,
+
+        0,
+        0,
+        cropWidth * 2,
+        cropHeight * 2
+
+      );
+
+
+      /*
+       * Conversion en image JPEG.
+       */
+
+      enlargedCanvas.toBlob(
 
         async function(blob) {
 
@@ -755,11 +806,15 @@
 
           const file =
             new File(
+
               [blob],
+
               "isbn-capture.jpg",
+
               {
                 type: "image/jpeg"
               }
+
             );
 
 
@@ -769,7 +824,7 @@
 
         "image/jpeg",
 
-        0.95
+        0.98
 
       );
     }
@@ -782,53 +837,66 @@
     async function analyseImage(file) {
 
 
+      message.textContent =
+        "🔎 Lecture du code-barres…";
+
+
+      /*
+       * Crée un conteneur invisible
+       * pour html5-qrcode.
+       */
+
+      let reader =
+        document.getElementById(
+          "readerForImage"
+        );
+
+
+      if (!reader) {
+
+        reader =
+          document.createElement("div");
+
+        reader.id =
+          "readerForImage";
+
+        reader.style.display =
+          "none";
+
+        document.body.appendChild(
+          reader
+        );
+      }
+
+
+      /*
+       * Nouveau lecteur.
+       */
+
       try {
-
-
-        /*
-         * Création d'un scanner temporaire.
-
-         * L'analyse est réalisée dans le navigateur.
-         */
 
         scanner =
           new Html5Qrcode(
             "readerForImage"
           );
-
 
       } catch (error) {
 
-        /*
-         * Le conteneur n'existe pas encore.
-         *
-         * On le crée ici.
-         */
+        console.error(error);
 
-        const div =
-          document.createElement("div");
+        message.textContent =
+          "❌ Impossible de lancer le lecteur.";
 
-
-        div.id =
-          "readerForImage";
-
-
-        div.style.display =
-          "none";
-
-
-        document.body.appendChild(div);
-
-
-        scanner =
-          new Html5Qrcode(
-            "readerForImage"
-          );
+        return;
       }
 
 
       try {
 
+
+        /*
+         * Analyse locale de l'image.
+         */
 
         const result =
           await scanner.scanFile(
@@ -837,19 +905,32 @@
           );
 
 
-        const isbn =
+        const code =
           String(result)
             .replace(/\D/g, "");
 
 
+        /*
+         * On affiche temporairement
+         * ce que le lecteur a réellement trouvé.
+         *
+         * C'est utile pour notre diagnostic.
+         */
+
+        console.log(
+          "Code détecté :",
+          code
+        );
+
+
         if (
-          isbn.length === 13 &&
-          isValidISBN13(isbn)
+          code.length === 13 &&
+          isValidISBN13(code)
         ) {
 
 
           currentISBN =
-            isbn;
+            code;
 
 
           message.textContent =
@@ -857,7 +938,7 @@
 
 
           isbnDisplay.textContent =
-            isbn;
+            code;
 
 
           isbnDisplay.style.display =
@@ -872,32 +953,50 @@
             "block";
 
 
-          return;
+        } else {
+
+
+          /*
+           * Si un EAN est détecté mais
+           * n'est pas un ISBN valide,
+           * on le signale séparément.
+           */
+
+          if (code.length === 13) {
+
+            message.textContent =
+              "⚠️ Code EAN détecté : " +
+              code +
+              " — mais il ne correspond pas à un ISBN valide.";
+
+          } else {
+
+            message.textContent =
+              "❌ Code non détecté. " +
+              "Rapproche légèrement le livre " +
+              "et recommence la capture.";
+          }
         }
-
-
-        message.textContent =
-          "⚠️ Code trouvé, mais ce n'est pas un ISBN-13 valide.";
 
 
       } catch (error) {
 
 
         console.log(
-          "Aucun code détecté dans l'image.",
+          "Aucun code détecté :",
           error
         );
 
 
         message.textContent =
           "❌ Code non détecté. " +
-          "Rapproche le livre, fais la mise au point " +
-          "et réessaie.";
+          "Place bien les barres dans le cadre " +
+          "et fais la mise au point avant de capturer.";
       }
 
 
       /*
-       * Nettoyage du scanner d'image.
+       * Nettoyage.
        */
 
       try {
@@ -921,13 +1020,11 @@
 
     async function stopScanner() {
 
-
       scanning =
         false;
 
 
       if (stream) {
-
 
         const tracks =
           stream.getTracks();
@@ -969,11 +1066,10 @@
 
 
     // ==================================================
-    // RECHERCHE VINTED
+    // VINTED
     // ==================================================
 
     function searchVinted() {
-
 
       if (!currentISBN) {
         return;
@@ -995,7 +1091,6 @@
     // ==================================================
 
     function newScan() {
-
 
       currentISBN =
         null;
@@ -1022,7 +1117,7 @@
 
 
     // ==================================================
-    // BOUTONS
+    // ÉVÉNEMENTS
     // ==================================================
 
     scanButton.addEventListener(
