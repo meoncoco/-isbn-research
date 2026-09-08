@@ -1,6 +1,12 @@
+/* =====================================================
+   RESEARCH — ISBN SCANNER
+   ===================================================== */
+
+
 * {
   box-sizing: border-box;
 }
+
 
 html,
 body {
@@ -8,8 +14,11 @@ body {
   padding: 0;
 }
 
+
 body {
+
   background: #f3f4f6;
+
   color: #111827;
 
   font-family:
@@ -20,15 +29,18 @@ body {
     Helvetica,
     Arial,
     sans-serif;
+
 }
 
 
-/* =========================
-   APPLICATION
-========================= */
+/* =====================================================
+   APP
+   ===================================================== */
 
 .app {
+
   width: 100%;
+
   max-width: 650px;
 
   margin: auto;
@@ -36,38 +48,55 @@ body {
   padding:
     20px
     15px
-    40px;
+    50px;
+
 }
 
 
-/* =========================
+/* =====================================================
    HEADER
-========================= */
+   ===================================================== */
 
 .header {
+
   text-align: center;
 
-  margin-bottom: 20px;
+  margin-bottom: 22px;
+
 }
 
+
+.logo {
+
+  font-size: 38px;
+
+}
+
+
 .header h1 {
+
   margin: 0;
 
   font-size: 30px;
+
 }
+
 
 .header p {
-  margin-top: 7px;
+
+  margin-top: 6px;
 
   color: #6b7280;
+
 }
 
 
-/* =========================
+/* =====================================================
    CARDS
-========================= */
+   ===================================================== */
 
 .card {
+
   background: white;
 
   border-radius: 18px;
@@ -77,21 +106,27 @@ body {
   margin-bottom: 16px;
 
   box-shadow:
-    0 3px 15px rgba(0, 0, 0, 0.06);
+    0 3px 16px
+    rgba(0, 0, 0, .06);
+
 }
 
+
 .card h2 {
+
   margin-top: 0;
 
   font-size: 19px;
+
 }
 
 
-/* =========================
-   SCANNER
-========================= */
+/* =====================================================
+   CAMERA
+   ===================================================== */
 
 .scanner {
+
   position: relative;
 
   width: 100%;
@@ -102,20 +137,77 @@ body {
 
   border-radius: 14px;
 
-  background: #111;
+  background: #080808;
+
 }
 
+
+/*
+   La vidéo occupe réellement tout le scanner.
+*/
+
 #video {
+
+  position: absolute;
+
+  inset: 0;
+
   width: 100%;
+
   height: 100%;
 
   object-fit: cover;
+
+  background: #000;
+
 }
 
 
-/* Overlay */
+/*
+   Écran affiché avant l'activation
+   de la caméra.
+*/
+
+.camera-placeholder {
+
+  position: absolute;
+
+  inset: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 10px;
+
+  color: white;
+
+  text-align: center;
+
+  background: #111827;
+
+  z-index: 2;
+
+}
+
+
+.camera-icon {
+
+  font-size: 42px;
+
+}
+
+
+/* =====================================================
+   OVERLAY CAMERA
+   ===================================================== */
 
 .scanner-overlay {
+
   position: absolute;
 
   inset: 0;
@@ -123,18 +215,22 @@ body {
   display: flex;
 
   justify-content: center;
+
   align-items: center;
 
   pointer-events: none;
+
+  z-index: 3;
+
 }
 
 
-/* Zone de scan */
-
 .scanner-frame {
+
   position: relative;
 
-  width: 85%;
+  width: 86%;
+
   height: 32%;
 
   border:
@@ -145,36 +241,42 @@ body {
 
   box-shadow:
     0 0 0 9999px
-    rgba(0, 0, 0, 0.4);
+    rgba(0, 0, 0, .42);
 
   overflow: hidden;
+
 }
 
 
-/* Ligne animée */
-
 .scanner-line {
+
   position: absolute;
 
   left: 0;
+
   right: 0;
 
   height: 3px;
 
   background: #22c55e;
 
+  box-shadow:
+    0 0 8px #22c55e;
+
   animation:
-    scanLine 2s infinite;
+    scanAnimation 2s infinite;
+
 }
 
-@keyframes scanLine {
+
+@keyframes scanAnimation {
 
   0% {
     top: 0;
   }
 
   50% {
-    top: 100%;
+    top: calc(100% - 3px);
   }
 
   100% {
@@ -184,11 +286,12 @@ body {
 }
 
 
-/* =========================
-   BOUTONS
-========================= */
+/* =====================================================
+   BUTTONS
+   ===================================================== */
 
 .button {
+
   width: 100%;
 
   border: none;
@@ -205,36 +308,48 @@ body {
 
   cursor: pointer;
 
-  transition:
-    transform .1s,
-    opacity .2s;
+  -webkit-tap-highlight-color:
+    transparent;
+
 }
+
 
 .button:active {
+
   transform: scale(.98);
+
 }
 
+
 .button:disabled {
+
   opacity: .4;
 
   cursor: not-allowed;
+
 }
 
 
 .primary {
+
   background: #2563eb;
 
   color: white;
+
 }
 
+
 .secondary {
+
   background: #e5e7eb;
 
   color: #111827;
+
 }
 
 
 .photo-button {
+
   display: block;
 
   text-align: center;
@@ -242,69 +357,157 @@ body {
   background: #111827;
 
   color: white;
+
 }
 
 
-/* =========================
-   INPUT FILE
-========================= */
+/* =====================================================
+   INPUT PHOTO
+   ===================================================== */
 
 #photoInput {
+
   display: none;
+
 }
 
 
-/* =========================
-   CROP
-========================= */
+/* =====================================================
+   DIAGNOSTIC CAMERA
+   ===================================================== */
 
-.crop-wrapper {
+.diagnostic {
+
+  margin-top: 10px;
+
+  padding: 10px 12px;
+
+  border-radius: 10px;
+
+  background: #f3f4f6;
+
+  color: #6b7280;
+
+  font-size: 13px;
+
+  line-height: 1.4;
+
+}
+
+
+.diagnostic.success {
+
+  background: #dcfce7;
+
+  color: #166534;
+
+}
+
+
+.diagnostic.error {
+
+  background: #fee2e2;
+
+  color: #991b1b;
+
+}
+
+
+/* =====================================================
+   CROP
+   ===================================================== */
+
+.crop-instructions {
+
+  padding: 12px;
+
+  margin-bottom: 12px;
+
+  border-radius: 10px;
+
+  background: #eff6ff;
+
+  color: #1e40af;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+
+}
+
+
+/*
+   Important :
+   on donne une vraie hauteur au conteneur.
+*/
+
+.crop-container {
+
+  position: relative;
+
   width: 100%;
 
-  max-height: 500px;
+  min-height: 300px;
+
+  max-height: 600px;
 
   overflow: hidden;
 
   background: #111;
 
-  border-radius: 12px;
+  border-radius: 14px;
 
-  margin-top: 15px;
-
-  margin-bottom: 15px;
-}
-
-#cropImage {
-  display: block;
-
-  max-width: 100%;
 }
 
 
 /*
- * Important pour Cropper.js
- * sur mobile.
- */
+   L'image est volontairement limitée
+   pour éviter qu'elle sorte de l'écran.
+*/
 
-.cropper-container {
-  width: 100% !important;
+#cropImage {
+
+  display: block;
+
+  max-width: 100%;
+
 }
 
 
-/* =========================
-   ISBN
-========================= */
+/*
+   Cropper.js doit pouvoir occuper
+   toute la zone.
+*/
 
-.isbn-container {
+.cropper-container {
+
+  width: 100% !important;
+
+  height: auto !important;
+
+}
+
+
+/* =====================================================
+   ISBN
+   ===================================================== */
+
+.isbn-row {
+
   display: flex;
 
   gap: 8px;
+
 }
 
+
 #isbn {
+
   flex: 1;
 
   min-width: 0;
+
+  padding: 14px;
 
   border:
     2px solid
@@ -312,18 +515,22 @@ body {
 
   border-radius: 12px;
 
-  padding: 14px;
-
   font-size: 18px;
 
   outline: none;
+
 }
+
 
 #isbn:focus {
+
   border-color: #2563eb;
+
 }
 
+
 .copy-button {
+
   width: 54px;
 
   border: none;
@@ -335,39 +542,49 @@ body {
   font-size: 20px;
 
   cursor: pointer;
+
 }
 
 
-/* =========================
-   RECHERCHE
-========================= */
+/* =====================================================
+   SEARCH
+   ===================================================== */
 
 .search-buttons {
+
   display: grid;
 
   gap: 10px;
 
   margin-top: 15px;
+
 }
 
+
 .vinted {
+
   background: #007782;
 
   color: white;
+
 }
 
+
 .google {
+
   background: #4285f4;
 
   color: white;
+
 }
 
 
-/* =========================
+/* =====================================================
    MESSAGES
-========================= */
+   ===================================================== */
 
 .message {
+
   min-height: 20px;
 
   margin: 10px 0 0;
@@ -375,66 +592,96 @@ body {
   font-size: 14px;
 
   color: #6b7280;
+
 }
+
 
 .message.success {
+
   color: #16a34a;
+
 }
+
 
 .message.error {
+
   color: #dc2626;
+
 }
 
 
-/* =========================
-   AIDE
-========================= */
+/* =====================================================
+   HELP
+   ===================================================== */
 
 .help {
+
   color: #6b7280;
 
   font-size: 14px;
 
   line-height: 1.5;
+
 }
 
 
-/* =========================
+/* =====================================================
    FOOTER
-========================= */
+   ===================================================== */
 
 footer {
+
   text-align: center;
 
   color: #9ca3af;
 
   font-size: 12px;
 
-  padding: 10px;
 }
 
 
-/* =========================
+/* =====================================================
    UTILITAIRE
-========================= */
+   ===================================================== */
 
 .hidden {
+
   display: none !important;
+
 }
 
 
-/* =========================
-   DESKTOP
-========================= */
+/* =====================================================
+   MOBILE
+   ===================================================== */
 
-@media (min-width: 700px) {
+@media (max-width: 500px) {
 
   .app {
-    padding-top: 40px;
+
+    padding-top: 12px;
+
   }
 
+
+  .card {
+
+    padding: 15px;
+
+  }
+
+
   .scanner {
-    aspect-ratio: 16 / 10;
+
+    aspect-ratio: 3 / 4;
+
+  }
+
+
+  .crop-container {
+
+    min-height: 280px;
+
   }
 
 }
