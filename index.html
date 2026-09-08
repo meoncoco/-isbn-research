@@ -1,30 +1,19 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <meta name="theme-color" content="#007782" />
-  <meta
-    name="description"
-    content="Scanner un ISBN et rechercher automatiquement sur Vinted."
-  />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#007782">
 
   <title>ISBN Research</title>
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 
-  <!-- Scanner code-barres -->
-  <script
-    src="https://unpkg.com/html5-qrcode"
-    defer>
-  </script>
+  <!-- Détection code-barres de secours -->
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
 
-  <!-- OCR -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
-    defer>
-  </script>
+  <!-- OCR de secours ultime -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
 
   <script src="app.js" defer></script>
 </head>
@@ -34,10 +23,8 @@
 <main class="app">
 
   <header class="header">
-    <div>
-      <h1>ISBN Research</h1>
-      <p>Scanne un livre pour trouver ses annonces</p>
-    </div>
+    <h1>ISBN Research</h1>
+    <p>Scanne un livre pour trouver ses annonces</p>
   </header>
 
 
@@ -47,16 +34,40 @@
 
   <section class="scanner-card">
 
-    <div id="reader"></div>
+    <div id="camera-container" class="camera-container hidden">
 
-    <div id="scanner-placeholder" class="scanner-placeholder">
+      <video
+        id="camera-video"
+        autoplay
+        muted
+        playsinline>
+      </video>
+
+      <div class="scan-overlay">
+        <div class="scan-box">
+          <div class="scan-line"></div>
+        </div>
+
+        <p>
+          Place le code-barres dans le cadre
+        </p>
+      </div>
+
+    </div>
+
+
+    <div
+      id="scanner-placeholder"
+      class="scanner-placeholder">
+
       <div class="camera-icon">📚</div>
 
       <strong>Scanner un livre</strong>
 
       <p>
-        Scanne le code-barres ou prends une photo
+        Cadre le code-barres dans la zone
       </p>
+
     </div>
 
 
@@ -68,27 +79,32 @@
 
 
     <button
+      id="capture-button"
+      class="capture-button hidden">
+      📸 Capturer le code-barres
+    </button>
+
+
+    <button
       id="photo-button"
       class="secondary-button">
-      📸 Prendre une photo
+      🖼️ Choisir / prendre une photo
     </button>
 
 
     <button
       id="stop-scanner"
       class="secondary-button hidden">
-      ✕ Arrêter le scanner
+      ✕ Arrêter
     </button>
 
 
-    <!-- Input caméra/photo natif -->
     <input
       id="photo-input"
       type="file"
       accept="image/*"
       capture="environment"
-      hidden
-    />
+      hidden>
 
   </section>
 
@@ -103,13 +119,15 @@
 
     <div class="spinner"></div>
 
-    <strong id="analysis-title">
-      Analyse de l'image...
-    </strong>
+    <div>
+      <strong id="analysis-title">
+        Analyse...
+      </strong>
 
-    <p id="analysis-text">
-      Recherche du code-barres et de l'ISBN.
-    </p>
+      <p id="analysis-text">
+        Recherche du code-barres.
+      </p>
+    </div>
 
   </section>
 
@@ -132,13 +150,11 @@
         inputmode="numeric"
         autocomplete="off"
         placeholder="978XXXXXXXXXX"
-        maxlength="17"
-      />
+        maxlength="17">
 
       <button
         id="clear-isbn"
-        class="clear-button"
-        aria-label="Effacer">
+        class="clear-button">
         ×
       </button>
 
