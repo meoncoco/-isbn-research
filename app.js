@@ -1,32 +1,38 @@
 "use strict";
 
 /*
- * ISBN Research
+ * ISBN RESEARCH
  *
- * V2
+ * Scanner V3
  *
- * - Scanner code-barres en direct
- * - Photo du code-barres
- * - OCR de secours
- * - Validation ISBN-10 / ISBN-13
- * - Conversion ISBN-10 -> ISBN-13
- * - Recherche Vinted
- * - Historique local
+ * Stratégie :
+ *
+ * 1. Caméra native haute résolution
+ * 2. BarcodeDetector natif si disponible
+ * 3. html5-qrcode sur une capture
+ * 4. OCR Tesseract en dernier recours
+ *
  */
 
 
-// ==========================================
+// =====================================================
 // DOM
-// ==========================================
+// =====================================================
 
-const readerElement =
-  document.getElementById("reader");
+const video =
+  document.getElementById("camera-video");
 
-const placeholderElement =
+const cameraContainer =
+  document.getElementById("camera-container");
+
+const placeholder =
   document.getElementById("scanner-placeholder");
 
 const startButton =
   document.getElementById("start-scanner");
+
+const captureButton =
+  document.getElementById("capture-button");
 
 const photoButton =
   document.getElementById("photo-button");
@@ -49,7 +55,7 @@ const analysisText =
 const isbnInput =
   document.getElementById("isbn");
 
-const clearIsbnButton =
+const clearButton =
   document.getElementById("clear-isbn");
 
 const statusElement =
@@ -65,26 +71,31 @@ const clearHistoryButton =
   document.getElementById("clear-history");
 
 
-// ==========================================
+// =====================================================
 // STATE
-// ==========================================
+// =====================================================
 
-let scanner = null;
-let scannerRunning = false;
+let cameraStream = null;
 
-let scanLocked = false;
+let cameraRunning = false;
+
+let detectionTimer = null;
+
+let processing = false;
+
+let barcodeDetector = null;
 
 const HISTORY_KEY =
   "isbn-research-history";
 
 
-// ==========================================
+// =====================================================
 // ISBN
-// ==========================================
+// =====================================================
 
 function cleanISBN(value) {
 
-  return value
+  return String(value || "")
     .replace(/[^0-9Xx]/g, "")
     .toUpperCase();
 }
@@ -131,13 +142,10 @@ function isValidISBN13(isbn) {
         : digit * 3;
   }
 
-  const checkDigit =
+  const check =
     (10 - (sum % 10)) % 10;
 
-  return (
-    checkDigit ===
-    Number(isbn[12])
-  );
+  return check === Number(isbn[12]);
 }
 
 
@@ -160,10 +168,10 @@ function isbn10To13(isbn10) {
         : digit * 3;
   }
 
-  const checkDigit =
+  const check =
     (10 - (sum % 10)) % 10;
 
-  return base + checkDigit;
+  return base + check;
 }
 
 
@@ -184,9 +192,9 @@ function normalizeISBN(value) {
 }
 
 
-// ==========================================
-// RESULTAT ISBN
-// ==========================================
+// =====================================================
+// RESULTAT
+// =====================================================
 
 function setISBN(value) {
 
@@ -201,12 +209,14 @@ function setISBN(value) {
     statusElement.className =
       "status invalid";
 
-    vintedButton.disabled = true;
+    vintedButton.disabled =
+      true;
 
     return false;
   }
 
-  isbnInput.value = isbn;
+  isbnInput.value =
+    isbn;
 
   statusElement.textContent =
     `ISBN valide : ${isbn}`;
@@ -214,7 +224,8 @@ function setISBN(value) {
   statusElement.className =
     "status valid";
 
-  vintedButton.disabled = false;
+  vintedButton.disabled =
+    false;
 
   return true;
 }
@@ -224,12 +235,14 @@ function updateISBNStatus() {
 
   if (!isbnInput.value.trim()) {
 
-    statusElement.textContent = "";
+    statusElement.textContent =
+      "";
 
     statusElement.className =
       "status";
 
-    vintedButton.disabled = true;
+    vintedButton.disabled =
+      true;
 
     return;
   }
@@ -238,39 +251,44 @@ function updateISBNStatus() {
 }
 
 
-// ==========================================
+// =====================================================
 // VINTED
-// ==========================================
+// =====================================================
 
-function searchVinted(isbn) {
+function searchVinted(value) {
 
-  const normalizedISBN =
-    normalizeISBN(isbn);
+  const isbn =
+    normalizeISBN(value);
 
-  if (!normalizedISBN) {
+  if (!isbn) {
     return;
   }
 
-  addToHistory(normalizedISBN);
+  addToHistory(isbn);
 
   const url =
     "https://www.vinted.fr/catalog?search_text=" +
-    encodeURIComponent(normalizedISBN);
+    encodeURIComponent(isbn);
 
-  window.open(url, "_blank");
+  window.open(
+    url,
+    "_blank"
+  );
 }
 
 
-// ==========================================
+// =====================================================
 // HISTORIQUE
-// ==========================================
+// =====================================================
 
 function getHistory() {
 
   try {
 
     return JSON.parse(
-      localStorage.getItem(HISTORY_KEY)
+      localStorage.getItem(
+        HISTORY_KEY
+      )
     ) || [];
 
   } catch {
@@ -325,7 +343,8 @@ function renderHistory() {
     return;
   }
 
-  historyElement.innerHTML = "";
+  historyElement.innerHTML =
+    "";
 
   history.forEach(isbn => {
 
@@ -336,174 +355,187 @@ function renderHistory() {
       "history-item";
 
 
-    const isbnText =
+    const text =
       document.createElement("span");
 
-    isbnText.className =
+    text.className =
       "history-isbn";
 
-    isbnText.textContent =
+    text.textContent =
       isbn;
 
 
-    const searchButton =
+    const button =
       document.createElement("button");
 
-    searchButton.className =
+    button.className =
       "history-search";
 
-    searchButton.textContent =
+    button.textContent =
       "Vinted";
 
-    searchButton.addEventListener(
+    button.addEventListener(
       "click",
       () => searchVinted(isbn)
     );
 
 
-    item.appendChild(isbnText);
+    item.appendChild(text);
 
-    item.appendChild(searchButton);
+    item.appendChild(button);
 
     historyElement.appendChild(item);
   });
 }
 
 
-// ==========================================
-// SCANNER CAMERA
-// ==========================================
+// =====================================================
+// CAMERA
+// =====================================================
 
-async function startScanner() {
+async function startCamera() {
 
-  if (scannerRunning) {
+  if (cameraRunning) {
     return;
   }
 
-  if (
-    typeof Html5Qrcode ===
-    "undefined"
-  ) {
-
-    alert(
-      "Le scanner n'est pas encore chargé. " +
-      "Vérifie ta connexion Internet."
-    );
-
-    return;
-  }
-
-  scanLocked = false;
-
-  scanner =
-    new Html5Qrcode("reader");
-
-  readerElement.style.display =
-    "block";
-
-  placeholderElement.classList.add(
-    "hidden"
-  );
-
-  startButton.classList.add(
-    "hidden"
-  );
-
-  photoButton.classList.add(
-    "hidden"
-  );
-
-  stopButton.classList.remove(
-    "hidden"
-  );
-
-  scannerRunning = true;
-
-
-  const config = {
-
-    fps: 10,
-
-    qrbox: {
-      width: 300,
-      height: 140
-    },
-
-    aspectRatio: 1.777778,
-
-    formatsToSupport: [
-
-      Html5QrcodeSupportedFormats.EAN_13,
-
-      Html5QrcodeSupportedFormats.EAN_8,
-
-      Html5QrcodeSupportedFormats.UPC_A,
-
-      Html5QrcodeSupportedFormats.UPC_E,
-
-      Html5QrcodeSupportedFormats.CODE_128
-
-    ]
-  };
+  processing = false;
 
 
   try {
 
-    await scanner.start(
+    cameraStream =
+      await navigator.mediaDevices.getUserMedia({
 
-      {
-        facingMode:
-          "environment"
-      },
+        audio: false,
 
-      config,
+        video: {
 
-      onScanSuccess,
+          facingMode: {
+            ideal: "environment"
+          },
 
-      onScanFailure
+          width: {
+            ideal: 1920
+          },
+
+          height: {
+            ideal: 1080
+          },
+
+          frameRate: {
+            ideal: 30
+          }
+        }
+      });
+
+
+    video.srcObject =
+      cameraStream;
+
+    await video.play();
+
+
+    cameraRunning =
+      true;
+
+
+    cameraContainer.classList.remove(
+      "hidden"
     );
+
+    placeholder.classList.add(
+      "hidden"
+    );
+
+    startButton.classList.add(
+      "hidden"
+    );
+
+    photoButton.classList.add(
+      "hidden"
+    );
+
+    captureButton.classList.remove(
+      "hidden"
+    );
+
+    stopButton.classList.remove(
+      "hidden"
+    );
+
+
+    initializeBarcodeDetector();
+
+    /*
+     * On tente une détection automatique
+     * toutes les 500 ms.
+     */
+
+    detectionTimer =
+      setInterval(
+        detectLiveFrame,
+        500
+      );
+
 
   } catch (error) {
 
-    console.error(error);
-
-    await stopScanner();
+    console.error(
+      "Erreur caméra :",
+      error
+    );
 
     alert(
-      "Impossible d'accéder à la caméra."
+      "Impossible d'accéder à la caméra.\n\n" +
+      "Vérifie que le navigateur a l'autorisation " +
+      "d'utiliser la caméra."
     );
   }
 }
 
 
-async function stopScanner() {
+function stopCamera() {
 
-  if (
-    scanner &&
-    scannerRunning
-  ) {
+  if (detectionTimer) {
 
-    try {
-      await scanner.stop();
-    } catch (error) {
-      console.warn(error);
-    }
+    clearInterval(
+      detectionTimer
+    );
 
-    try {
-      scanner.clear();
-    } catch (error) {
-      console.warn(error);
-    }
+    detectionTimer =
+      null;
   }
 
-  scanner = null;
 
-  scannerRunning = false;
+  if (cameraStream) {
 
-  readerElement.style.display =
-    "none";
+    cameraStream
+      .getTracks()
+      .forEach(
+        track => track.stop()
+      );
 
-  placeholderElement.classList.remove(
+    cameraStream =
+      null;
+  }
+
+
+  video.srcObject =
+    null;
+
+  cameraRunning =
+    false;
+
+  processing =
+    false;
+
+
+  cameraContainer.classList.add(
+    "hidden"
+  );
+
+  placeholder.classList.remove(
     "hidden"
   );
 
@@ -515,73 +547,244 @@ async function stopScanner() {
     "hidden"
   );
 
+  captureButton.classList.add(
+    "hidden"
+  );
+
   stopButton.classList.add(
     "hidden"
   );
 }
 
 
-function onScanSuccess(decodedText) {
+// =====================================================
+// BARCODE DETECTOR NATIF
+// =====================================================
 
-  if (scanLocked) {
-    return;
-  }
+function initializeBarcodeDetector() {
 
-  scanLocked = true;
+  if (
+    !("BarcodeDetector" in window)
+  ) {
 
-  console.log(
-    "Code détecté :",
-    decodedText
-  );
+    barcodeDetector =
+      null;
 
-  const isbn =
-    normalizeISBN(decodedText);
-
-  if (!isbn) {
-
-    scanLocked = false;
-
-    statusElement.textContent =
-      "Code détecté mais ISBN invalide.";
-
-    statusElement.className =
-      "status invalid";
+    console.log(
+      "BarcodeDetector non disponible."
+    );
 
     return;
   }
 
-  isbnInput.value =
-    isbn;
 
-  updateISBNStatus();
+  try {
 
-  stopScanner();
+    barcodeDetector =
+      new BarcodeDetector({
+
+        formats: [
+          "ean_13",
+          "ean_8",
+          "upc_a",
+          "upc_e",
+          "code_128"
+        ]
+
+      });
+
+  } catch (error) {
+
+    console.warn(
+      "BarcodeDetector indisponible :",
+      error
+    );
+
+    barcodeDetector =
+      null;
+  }
+}
+
+
+// =====================================================
+// DETECTION IMAGE CAMERA
+// =====================================================
+
+async function detectLiveFrame() {
+
+  if (
+    !cameraRunning ||
+    processing ||
+    video.readyState < 2
+  ) {
+    return;
+  }
+
 
   /*
-   * On ne lance PAS automatiquement Vinted.
-   *
-   * L'utilisateur voit maintenant
-   * l'ISBN et appuie sur le bouton.
+   * Première méthode :
+   * BarcodeDetector natif.
    */
+
+  if (barcodeDetector) {
+
+    try {
+
+      const results =
+        await barcodeDetector.detect(
+          video
+        );
+
+
+      for (
+        const result
+        of results
+      ) {
+
+        const isbn =
+          normalizeISBN(
+            result.rawValue
+          );
+
+        if (isbn) {
+
+          onISBNFound(
+            isbn,
+            "Code-barres détecté"
+          );
+
+          return;
+        }
+      }
+
+    } catch (error) {
+
+      console.warn(
+        "Erreur BarcodeDetector",
+        error
+      );
+    }
+  }
 }
 
 
-function onScanFailure() {
-  // Normal :
-  // la caméra essaie constamment
-  // de trouver un code.
+// =====================================================
+// CAPTURE PHOTO CAMERA
+// =====================================================
+
+captureButton.addEventListener(
+  "click",
+  async () => {
+
+    if (
+      !cameraRunning ||
+      processing
+    ) {
+      return;
+    }
+
+    await captureAndAnalyze();
+  }
+);
+
+
+async function captureAndAnalyze() {
+
+  processing = true;
+
+  showAnalysis(
+    "Analyse de la photo...",
+    "Recherche du code-barres."
+  );
+
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  /*
+   * On récupère la vraie résolution
+   * du flux caméra.
+   */
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
+
+
+  /*
+   * Capture haute résolution.
+   */
+
+  context.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  /*
+   * On transforme le canvas en fichier.
+   */
+
+  const blob =
+    await new Promise(
+      resolve =>
+        canvas.toBlob(
+          resolve,
+          "image/jpeg",
+          0.95
+        )
+    );
+
+
+  if (!blob) {
+
+    processing = false;
+
+    hideAnalysis();
+
+    return;
+  }
+
+
+  /*
+   * On analyse l'image.
+   */
+
+  await analyzeImage(
+    blob
+  );
+
+  processing = false;
 }
 
 
-// ==========================================
-// PHOTO
-// ==========================================
+// =====================================================
+// PHOTO DEPUIS TELEPHONE
+// =====================================================
 
 photoButton.addEventListener(
   "click",
   () => {
 
-    photoInput.value = "";
+    photoInput.value =
+      "";
 
     photoInput.click();
   }
@@ -599,45 +802,54 @@ photoInput.addEventListener(
       return;
     }
 
-    await analyzePhoto(file);
+    await analyzeImage(file);
   }
 );
 
 
-// ==========================================
-// ANALYSE PHOTO
-// ==========================================
+// =====================================================
+// ANALYSE IMAGE
+// =====================================================
 
-async function analyzePhoto(file) {
+async function analyzeImage(file) {
+
+  processing = true;
+
 
   showAnalysis(
     "Analyse de la photo...",
-    "Recherche du code-barres."
+    "Étape 1/3 : recherche du code-barres."
   );
 
 
   /*
-   * Première tentative :
-   * utiliser le navigateur pour lire
-   * directement l'image.
+   * =========================================
+   * ÉTAPE 1
+   * BarcodeDetector
+   * =========================================
    */
 
-  const barcodeResult =
-    await tryBarcodeFromImage(file);
+  const nativeResult =
+    await detectBarcodeFromImage(
+      file
+    );
 
 
-  if (barcodeResult) {
+  if (nativeResult) {
 
     const isbn =
       normalizeISBN(
-        barcodeResult
+        nativeResult
       );
 
     if (isbn) {
 
-      hideAnalysis();
+      onISBNFound(
+        isbn,
+        "Code-barres détecté"
+      );
 
-      setISBN(isbn);
+      processing = false;
 
       return;
     }
@@ -645,14 +857,246 @@ async function analyzePhoto(file) {
 
 
   /*
-   * Deuxième tentative :
-   * OCR.
+   * =========================================
+   * ÉTAPE 2
+   * html5-qrcode
+   * =========================================
+   */
+
+  showAnalysis(
+    "Analyse du code-barres...",
+    "Étape 2/3 : lecture de l'image."
+  );
+
+
+  const qrResult =
+    await detectWithHtml5Qr(
+      file
+    );
+
+
+  if (qrResult) {
+
+    const isbn =
+      normalizeISBN(
+        qrResult
+      );
+
+    if (isbn) {
+
+      onISBNFound(
+        isbn,
+        "Code-barres détecté"
+      );
+
+      processing = false;
+
+      return;
+    }
+  }
+
+
+  /*
+   * =========================================
+   * ÉTAPE 3
+   * OCR
+   * =========================================
    */
 
   showAnalysis(
     "Lecture des chiffres...",
-    "Je cherche un ISBN imprimé sur la photo."
+    "Étape 3/3 : recherche de l'ISBN imprimé."
   );
+
+
+  const ocrResult =
+    await runOCR(file);
+
+
+  const isbn =
+    findISBNInText(
+      ocrResult
+    );
+
+
+  if (isbn) {
+
+    onISBNFound(
+      isbn,
+      "ISBN lu sur la photo"
+    );
+
+    processing = false;
+
+    return;
+  }
+
+
+  /*
+   * ÉCHEC
+   */
+
+  hideAnalysis();
+
+  statusElement.textContent =
+    "ISBN non détecté. Essaie une photo plus proche et bien nette du code-barres.";
+
+  statusElement.className =
+    "status invalid";
+
+  processing = false;
+}
+
+
+// =====================================================
+// BARCODE DETECTOR SUR IMAGE
+// =====================================================
+
+async function detectBarcodeFromImage(file) {
+
+  if (
+    !("BarcodeDetector" in window)
+  ) {
+    return null;
+  }
+
+
+  try {
+
+    const bitmap =
+      await createImageBitmap(
+        file
+      );
+
+
+    if (!barcodeDetector) {
+      initializeBarcodeDetector();
+    }
+
+
+    if (!barcodeDetector) {
+      return null;
+    }
+
+
+    const results =
+      await barcodeDetector.detect(
+        bitmap
+      );
+
+
+    for (
+      const result
+      of results
+    ) {
+
+      const value =
+        result.rawValue;
+
+      if (normalizeISBN(value)) {
+
+        return value;
+      }
+    }
+
+
+  } catch (error) {
+
+    console.warn(
+      "BarcodeDetector image error:",
+      error
+    );
+  }
+
+
+  return null;
+}
+
+
+// =====================================================
+// HTML5 QR
+// =====================================================
+
+async function detectWithHtml5Qr(file) {
+
+  if (
+    typeof Html5Qrcode ===
+    "undefined"
+  ) {
+    return null;
+  }
+
+
+  const id =
+    "temporary-barcode-reader-" +
+    Date.now();
+
+
+  const element =
+    document.createElement(
+      "div"
+    );
+
+  element.id =
+    id;
+
+  element.style.display =
+    "none";
+
+  document.body.appendChild(
+    element
+  );
+
+
+  const scanner =
+    new Html5Qrcode(id);
+
+
+  try {
+
+    const result =
+      await scanner.scanFile(
+        file,
+        false
+      );
+
+
+    try {
+      await scanner.clear();
+    } catch {}
+
+
+    element.remove();
+
+    return result;
+
+
+  } catch (error) {
+
+    try {
+      await scanner.clear();
+    } catch {}
+
+    element.remove();
+
+    return null;
+  }
+}
+
+
+// =====================================================
+// OCR
+// =====================================================
+
+async function runOCR(file) {
+
+  if (
+    typeof Tesseract ===
+    "undefined"
+  ) {
+
+    return "";
+  }
 
 
   try {
@@ -662,6 +1106,7 @@ async function analyzePhoto(file) {
         file,
         "eng",
         {
+
           logger: message => {
 
             if (
@@ -676,188 +1121,137 @@ async function analyzePhoto(file) {
                 );
 
               analysisText.textContent =
-                `Lecture du texte... ${percent}%`;
+                `Lecture des chiffres... ${percent}%`;
             }
           }
+
         }
       );
 
 
-    const text =
-      result.data.text;
-
     console.log(
-      "OCR :",
-      text
+      "OCR result :",
+      result.data.text
     );
 
 
-    const isbn =
-      findISBNInText(text);
-
-
-    hideAnalysis();
-
-
-    if (isbn) {
-
-      setISBN(isbn);
-
-      return;
-    }
-
-
-    statusElement.textContent =
-      "Aucun ISBN détecté. Essaie une photo plus rapprochée du code-barres.";
-
-    statusElement.className =
-      "status invalid";
+    return result.data.text;
 
 
   } catch (error) {
 
-    console.error(error);
-
-    hideAnalysis();
-
-    statusElement.textContent =
-      "Impossible d'analyser la photo.";
-
-    statusElement.className =
-      "status invalid";
-  }
-}
-
-
-// ==========================================
-// BARCODE DANS IMAGE
-// ==========================================
-
-async function tryBarcodeFromImage(file) {
-
-  /*
-   * On utilise une instance temporaire
-   * de Html5Qrcode pour tenter de lire
-   * le code directement dans la photo.
-   */
-
-  if (
-    typeof Html5Qrcode ===
-    "undefined"
-  ) {
-    return null;
-  }
-
-
-  const temporaryId =
-    "temporary-image-reader";
-
-
-  const temporary =
-    document.createElement("div");
-
-  temporary.id =
-    temporaryId;
-
-  temporary.style.display =
-    "none";
-
-  document.body.appendChild(
-    temporary
-  );
-
-
-  const scanner =
-    new Html5Qrcode(
-      temporaryId
+    console.error(
+      "OCR error:",
+      error
     );
 
-
-  try {
-
-    const result =
-      await scanner.scanFile(
-        file,
-        false
-      );
-
-    await scanner.clear();
-
-    temporary.remove();
-
-    return result;
-
-  } catch (error) {
-
-    try {
-      await scanner.clear();
-    } catch {}
-
-    temporary.remove();
-
-    return null;
+    return "";
   }
 }
 
 
-// ==========================================
-// OCR
-// ==========================================
+// =====================================================
+// TROUVER ISBN DANS TEXTE OCR
+// =====================================================
 
 function findISBNInText(text) {
 
-  /*
-   * On nettoie légèrement le texte OCR.
-   */
-
-  const normalized =
-    text
-      .replace(/[Oo]/g, "0")
-      .replace(/[Il|]/g, "1");
-
-
-  /*
-   * Cherche d'abord des groupes
-   * ressemblant à des ISBN-13.
-   */
-
-  const numbers =
-    normalized.match(
-      /(?:97[89][\s-]?)?(?:\d[\s-]?){9,13}/g
-    ) || [];
-
-
-  for (const candidate of numbers) {
-
-    const isbn =
-      normalizeISBN(candidate);
-
-    if (isbn) {
-      return isbn;
-    }
+  if (!text) {
+    return null;
   }
 
 
   /*
-   * Recherche ISBN-10.
+   * On corrige quelques erreurs OCR
+   * fréquentes.
    */
 
-  const isbn10Candidates =
-    normalized.match(
-      /\b\d[\d\s-]{8,11}[\dXx]\b/g
+  const cleaned =
+    text
+      .replace(/[Oo]/g, "0")
+      .replace(/[Il|]/g, "1")
+      .replace(/[Ss]/g, "5");
+
+
+  /*
+   * On récupère toutes les suites
+   * suffisamment longues de chiffres.
+   */
+
+  const candidates =
+    cleaned.match(
+      /(?:97[89][\s-]*)?(?:\d[\s-]*){9,13}/g
     ) || [];
 
 
   for (
     const candidate
-    of isbn10Candidates
+    of candidates
   ) {
 
     const isbn =
-      normalizeISBN(candidate);
+      normalizeISBN(
+        candidate
+      );
 
     if (isbn) {
       return isbn;
+    }
+  }
+
+
+  /*
+   * Deuxième tentative :
+   * on extrait uniquement les chiffres
+   * de chaque ligne.
+   */
+
+  const lines =
+    cleaned.split("\n");
+
+
+  for (
+    const line
+    of lines
+  ) {
+
+    const digits =
+      line.replace(
+        /[^0-9Xx]/g,
+        ""
+      );
+
+
+    /*
+     * Un ISBN-13 commence généralement
+     * par 978 ou 979.
+     */
+
+    if (
+      digits.length >= 13
+    ) {
+
+      for (
+        let i = 0;
+        i <= digits.length - 13;
+        i++
+      ) {
+
+        const candidate =
+          digits.substring(
+            i,
+            i + 13
+          );
+
+        const isbn =
+          normalizeISBN(
+            candidate
+          );
+
+        if (isbn) {
+          return isbn;
+        }
+      }
     }
   }
 
@@ -866,9 +1260,70 @@ function findISBNInText(text) {
 }
 
 
-// ==========================================
+// =====================================================
+// ISBN TROUVE
+// =====================================================
+
+function onISBNFound(
+  isbn,
+  message
+) {
+
+  console.log(
+    "ISBN trouvé :",
+    isbn
+  );
+
+
+  stopCamera();
+
+  hideAnalysis();
+
+  isbnInput.value =
+    isbn;
+
+
+  statusElement.textContent =
+    `${message} : ${isbn}`;
+
+  statusElement.className =
+    "status valid";
+
+
+  vintedButton.disabled =
+    false;
+
+
+  /*
+   * Petit feedback visuel.
+   */
+
+  if (
+    navigator.vibrate
+  ) {
+
+    navigator.vibrate(
+      [80, 50, 80]
+    );
+  }
+
+
+  /*
+   * On met le focus sur le bouton.
+   */
+
+  setTimeout(
+    () => {
+      vintedButton.focus();
+    },
+    100
+  );
+}
+
+
+// =====================================================
 // ANALYSE UI
-// ==========================================
+// =====================================================
 
 function showAnalysis(
   title,
@@ -895,19 +1350,19 @@ function hideAnalysis() {
 }
 
 
-// ==========================================
+// =====================================================
 // EVENTS
-// ==========================================
+// =====================================================
 
 startButton.addEventListener(
   "click",
-  startScanner
+  startCamera
 );
 
 
 stopButton.addEventListener(
   "click",
-  stopScanner
+  stopCamera
 );
 
 
@@ -915,14 +1370,11 @@ isbnInput.addEventListener(
   "input",
   () => {
 
-    const cleaned =
+    isbnInput.value =
       isbnInput.value.replace(
         /[^0-9Xx-]/g,
         ""
       );
-
-    isbnInput.value =
-      cleaned;
 
     updateISBNStatus();
   }
@@ -934,8 +1386,7 @@ isbnInput.addEventListener(
   event => {
 
     if (
-      event.key ===
-      "Enter"
+      event.key === "Enter"
     ) {
 
       const isbn =
@@ -947,6 +1398,20 @@ isbnInput.addEventListener(
         searchVinted(isbn);
       }
     }
+  }
+);
+
+
+clearButton.addEventListener(
+  "click",
+  () => {
+
+    isbnInput.value =
+      "";
+
+    updateISBNStatus();
+
+    isbnInput.focus();
   }
 );
 
@@ -967,19 +1432,6 @@ vintedButton.addEventListener(
 );
 
 
-clearIsbnButton.addEventListener(
-  "click",
-  () => {
-
-    isbnInput.value = "";
-
-    updateISBNStatus();
-
-    isbnInput.focus();
-  }
-);
-
-
 clearHistoryButton.addEventListener(
   "click",
   () => {
@@ -993,9 +1445,9 @@ clearHistoryButton.addEventListener(
 );
 
 
-// ==========================================
+// =====================================================
 // INIT
-// ==========================================
+// =====================================================
 
 renderHistory();
 
