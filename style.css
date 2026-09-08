@@ -1,26 +1,24 @@
-/* =====================================================
-   RESEARCH — ISBN SCANNER
-   ===================================================== */
-
+:root {
+  --bg: #0f172a;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --border: #e2e8f0;
+  --vinted: #007782;
+}
 
 * {
   box-sizing: border-box;
 }
 
-
 html,
 body {
   margin: 0;
   padding: 0;
-}
-
-
-body {
-
-  background: #f3f4f6;
-
-  color: #111827;
-
+  min-height: 100%;
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -29,659 +27,325 @@ body {
     Helvetica,
     Arial,
     sans-serif;
-
+  background: var(--bg);
+  color: var(--text);
 }
 
-
-/* =====================================================
-   APP
-   ===================================================== */
+body {
+  padding: 16px;
+}
 
 .app {
-
   width: 100%;
-
-  max-width: 650px;
-
-  margin: auto;
-
-  padding:
-    20px
-    15px
-    50px;
-
+  max-width: 720px;
+  margin: 0 auto;
 }
-
-
-/* =====================================================
-   HEADER
-   ===================================================== */
 
 .header {
-
-  text-align: center;
-
-  margin-bottom: 22px;
-
+  color: white;
+  margin: 8px 0 18px;
 }
-
-
-.logo {
-
-  font-size: 38px;
-
-}
-
 
 .header h1 {
-
   margin: 0;
-
-  font-size: 30px;
-
+  font-size: 28px;
 }
-
 
 .header p {
-
-  margin-top: 6px;
-
-  color: #6b7280;
-
+  margin: 6px 0 0;
+  color: #cbd5e1;
 }
-
-
-/* =====================================================
-   CARDS
-   ===================================================== */
 
 .card {
-
-  background: white;
-
+  background: var(--card);
   border-radius: 18px;
-
-  padding: 18px;
-
+  padding: 16px;
   margin-bottom: 16px;
-
   box-shadow:
-    0 3px 16px
-    rgba(0, 0, 0, .06);
-
+    0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
-
-.card h2 {
-
-  margin-top: 0;
-
-  font-size: 19px;
-
-}
-
-
-/* =====================================================
-   CAMERA
-   ===================================================== */
-
-.scanner {
-
-  position: relative;
-
-  width: 100%;
-
-  aspect-ratio: 4 / 3;
-
-  overflow: hidden;
-
-  border-radius: 14px;
-
-  background: #080808;
-
-}
-
-
-/*
-   La vidéo occupe réellement tout le scanner.
-*/
-
-#video {
-
-  position: absolute;
-
-  inset: 0;
-
-  width: 100%;
-
-  height: 100%;
-
-  object-fit: cover;
-
-  background: #000;
-
-}
-
-
-/*
-   Écran affiché avant l'activation
-   de la caméra.
-*/
-
-.camera-placeholder {
-
-  position: absolute;
-
-  inset: 0;
-
+.section-title {
   display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-
+  justify-content: space-between;
   align-items: center;
-
   gap: 10px;
-
-  color: white;
-
-  text-align: center;
-
-  background: #111827;
-
-  z-index: 2;
-
+  margin-bottom: 14px;
 }
 
-
-.camera-icon {
-
-  font-size: 42px;
-
+.section-title h2 {
+  margin: 0;
+  font-size: 18px;
 }
 
-
-/* =====================================================
-   OVERLAY CAMERA
-   ===================================================== */
-
-.scanner-overlay {
-
-  position: absolute;
-
-  inset: 0;
-
-  display: flex;
-
-  justify-content: center;
-
-  align-items: center;
-
-  pointer-events: none;
-
-  z-index: 3;
-
+.status {
+  font-size: 12px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  white-space: nowrap;
 }
 
-
-.scanner-frame {
-
+.camera-wrapper {
   position: relative;
-
-  width: 86%;
-
-  height: 32%;
-
-  border:
-    3px solid
-    #22c55e;
-
-  border-radius: 12px;
-
-  box-shadow:
-    0 0 0 9999px
-    rgba(0, 0, 0, .42);
-
+  width: 100%;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
-
+  background: #020617;
+  border-radius: 14px;
 }
 
+#camera {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
-.scanner-line {
-
+.camera-overlay {
   position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
 
+.camera-overlay p {
+  margin-top: 18px;
+  color: white;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.scan-frame {
+  width: 78%;
+  height: 32%;
+  position: relative;
+}
+
+.corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: #22c55e;
+  border-style: solid;
+}
+
+.top-left {
+  top: 0;
   left: 0;
+  border-width: 3px 0 0 3px;
+}
 
+.top-right {
+  top: 0;
   right: 0;
+  border-width: 3px 3px 0 0;
+}
 
-  height: 3px;
+.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 3px 3px;
+}
 
+.bottom-right {
+  bottom: 0;
+  right: 0;
+  border-width: 0 3px 3px 0;
+}
+
+.scan-line {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 50%;
+  height: 2px;
   background: #22c55e;
-
-  box-shadow:
-    0 0 8px #22c55e;
-
-  animation:
-    scanAnimation 2s infinite;
-
+  box-shadow: 0 0 10px #22c55e;
 }
 
-
-@keyframes scanAnimation {
-
-  0% {
-    top: 0;
-  }
-
-  50% {
-    top: calc(100% - 3px);
-  }
-
-  100% {
-    top: 0;
-  }
-
+.camera-actions,
+.crop-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 12px;
 }
-
-
-/* =====================================================
-   BUTTONS
-   ===================================================== */
 
 .button {
-
-  width: 100%;
-
-  border: none;
-
+  min-height: 48px;
+  border: 0;
   border-radius: 12px;
-
-  padding: 14px;
-
-  margin-top: 12px;
-
-  font-size: 16px;
-
-  font-weight: 600;
-
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition:
+    transform 0.1s,
+    opacity 0.2s;
 }
-
 
 .button:active {
-
-  transform: scale(.98);
-
+  transform: scale(0.98);
 }
 
-
-.button:disabled {
-
-  opacity: .4;
-
-  cursor: not-allowed;
-
+.button:disabled,
+.button.disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
-
 
 .primary {
-
-  background: #2563eb;
-
+  background: var(--primary);
   color: white;
-
 }
 
+.success {
+  background: var(--success);
+  color: white;
+}
 
 .secondary {
-
-  background: #e5e7eb;
-
-  color: #111827;
-
+  background: #e2e8f0;
+  color: #1e293b;
 }
-
-
-.photo-button {
-
-  display: block;
-
-  text-align: center;
-
-  background: #111827;
-
-  color: white;
-
-}
-
-
-/* =====================================================
-   INPUT PHOTO
-   ===================================================== */
-
-#photoInput {
-
-  display: none;
-
-}
-
-
-/* =====================================================
-   DIAGNOSTIC CAMERA
-   ===================================================== */
-
-.diagnostic {
-
-  margin-top: 10px;
-
-  padding: 10px 12px;
-
-  border-radius: 10px;
-
-  background: #f3f4f6;
-
-  color: #6b7280;
-
-  font-size: 13px;
-
-  line-height: 1.4;
-
-}
-
-
-.diagnostic.success {
-
-  background: #dcfce7;
-
-  color: #166534;
-
-}
-
-
-.diagnostic.error {
-
-  background: #fee2e2;
-
-  color: #991b1b;
-
-}
-
-
-/* =====================================================
-   CROP
-   ===================================================== */
-
-.crop-instructions {
-
-  padding: 12px;
-
-  margin-bottom: 12px;
-
-  border-radius: 10px;
-
-  background: #eff6ff;
-
-  color: #1e40af;
-
-  font-size: 14px;
-
-  line-height: 1.5;
-
-}
-
-
-/*
-   Important :
-   on donne une vraie hauteur au conteneur.
-*/
-
-.crop-container {
-
-  position: relative;
-
-  width: 100%;
-
-  min-height: 300px;
-
-  max-height: 600px;
-
-  overflow: hidden;
-
-  background: #111;
-
-  border-radius: 14px;
-
-}
-
-
-/*
-   L'image est volontairement limitée
-   pour éviter qu'elle sorte de l'écran.
-*/
-
-#cropImage {
-
-  display: block;
-
-  max-width: 100%;
-
-}
-
-
-/*
-   Cropper.js doit pouvoir occuper
-   toute la zone.
-*/
-
-.cropper-container {
-
-  width: 100% !important;
-
-  height: auto !important;
-
-}
-
-
-/* =====================================================
-   ISBN
-   ===================================================== */
-
-.isbn-row {
-
-  display: flex;
-
-  gap: 8px;
-
-}
-
-
-#isbn {
-
-  flex: 1;
-
-  min-width: 0;
-
-  padding: 14px;
-
-  border:
-    2px solid
-    #e5e7eb;
-
-  border-radius: 12px;
-
-  font-size: 18px;
-
-  outline: none;
-
-}
-
-
-#isbn:focus {
-
-  border-color: #2563eb;
-
-}
-
-
-.copy-button {
-
-  width: 54px;
-
-  border: none;
-
-  border-radius: 12px;
-
-  background: #e5e7eb;
-
-  font-size: 20px;
-
-  cursor: pointer;
-
-}
-
-
-/* =====================================================
-   SEARCH
-   ===================================================== */
-
-.search-buttons {
-
-  display: grid;
-
-  gap: 10px;
-
-  margin-top: 15px;
-
-}
-
 
 .vinted {
-
-  background: #007782;
-
+  background: var(--vinted);
   color: white;
-
 }
-
 
 .google {
-
-  background: #4285f4;
-
+  background: #111827;
   color: white;
-
 }
 
-
-/* =====================================================
-   MESSAGES
-   ===================================================== */
-
-.message {
-
-  min-height: 20px;
-
-  margin: 10px 0 0;
-
-  font-size: 14px;
-
-  color: #6b7280;
-
+.error {
+  color: var(--danger);
+  font-size: 13px;
+  min-height: 18px;
+  margin: 8px 0 0;
 }
 
-
-.message.success {
-
-  color: #16a34a;
-
-}
-
-
-.message.error {
-
-  color: #dc2626;
-
-}
-
-
-/* =====================================================
-   HELP
-   ===================================================== */
-
-.help {
-
-  color: #6b7280;
-
-  font-size: 14px;
-
-  line-height: 1.5;
-
-}
-
-
-/* =====================================================
-   FOOTER
-   ===================================================== */
-
-footer {
-
-  text-align: center;
-
-  color: #9ca3af;
-
+.hint,
+.crop-tip {
+  color: var(--muted);
   font-size: 12px;
-
 }
 
+.crop-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #111827;
+  touch-action: none;
+  user-select: none;
+}
 
-/* =====================================================
-   UTILITAIRE
-   ===================================================== */
+#capturedImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
+.selection {
+  position: absolute;
+  border: 2px solid #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+  pointer-events: none;
+}
+
+.selection-handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: #22c55e;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.selection-handle.tl {
+  left: -8px;
+  top: -8px;
+}
+
+.selection-handle.tr {
+  right: -8px;
+  top: -8px;
+}
+
+.selection-handle.bl {
+  left: -8px;
+  bottom: -8px;
+}
+
+.selection-handle.br {
+  right: -8px;
+  bottom: -8px;
+}
+
+.isbn-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+#isbn {
+  width: 100%;
+  min-height: 48px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+#isbn:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.result-message {
+  min-height: 20px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.search-buttons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
 
 .hidden {
-
   display: none !important;
-
 }
 
-
-/* =====================================================
-   MOBILE
-   ===================================================== */
-
-@media (max-width: 500px) {
-
-  .app {
-
-    padding-top: 12px;
-
+@media (min-width: 600px) {
+  .camera-actions {
+    grid-template-columns: 1.5fr 1fr 1fr;
   }
 
-
-  .card {
-
-    padding: 15px;
-
+  .crop-actions {
+    grid-template-columns: 1fr 1.5fr;
   }
 
-
-  .scanner {
-
-    aspect-ratio: 3 / 4;
-
+  .search-buttons {
+    grid-template-columns: 1fr 1fr;
   }
-
-
-  .crop-container {
-
-    min-height: 280px;
-
-  }
-
 }
