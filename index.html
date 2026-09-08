@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#007782">
+
+  <title>ISBN Research</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      background: #f4f4f4;
+      color: #222;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      padding:
+        max(20px, env(safe-area-inset-top))
+        20px
+        max(20px, env(safe-area-inset-bottom));
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+
+      background: white;
+      border-radius: 24px;
+
+      padding: 30px 22px;
+
+      box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.08);
+
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 52px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 8px 0 25px;
+      color: #777;
+      font-size: 15px;
+    }
+
+    #reader {
+      width: 100%;
+      display: none;
+      overflow: hidden;
+      border-radius: 18px;
+      margin-bottom: 18px;
+      background: #111;
+    }
+
+    #reader video {
+      border-radius: 18px;
+    }
+
+    .scan-zone {
+      display: none;
+      margin: -8px 0 15px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+
+      padding: 16px 18px;
+
+      font-size: 17px;
+      font-weight: 600;
+
+      cursor: pointer;
+
+      margin-top: 10px;
+
+      transition:
+        transform 0.1s,
+        opacity 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #scanButton,
+    #vintedButton {
+      background: #007782;
+      color: white;
+    }
+
+    #stopButton {
+      background: #eeeeee;
+      color: #333;
+      display: none;
+    }
+
+    #newScanButton {
+      background: #eeeeee;
+      color: #333;
+      display: none;
+    }
+
+    #vintedButton {
+      display: none;
+    }
+
+    #isbn {
+      display: none;
+
+      margin: 20px 0 5px;
+
+      padding: 16px;
+
+      background: #f2f2f2;
+      border-radius: 14px;
+
+      font-size: 21px;
+      font-weight: 700;
+
+      letter-spacing: 1px;
+    }
+
+    #message {
+      min-height: 22px;
+
+      margin-top: 15px;
+
+      color: #666;
+
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .privacy {
+      margin-top: 24px;
+
+      font-size: 12px;
+      line-height: 1.4;
+
+      color: #999;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="app">
+
+    <div class="logo">📚</div>
+
+    <h1>ISBN Research</h1>
+
+    <p class="subtitle">
+      Scanne le code-barres d'un livre
+    </p>
+
+    <div id="reader"></div>
+
+    <div id="scanZone" class="scan-zone">
+      Place le code-barres dans le cadre
+    </div>
+
+    <div id="isbn"></div>
+
+    <button id="scanButton">
+      📷 Scanner un livre
+    </button>
+
+    <button id="stopButton">
+      ✕ Arrêter le scanner
+    </button>
+
+    <button id="vintedButton">
+      🔎 Rechercher cet ISBN sur Vinted
+    </button>
+
+    <button id="newScanButton">
+      📷 Scanner un autre livre
+    </button>
+
+    <div id="message"></div>
+
+    <div class="privacy">
+      Aucun historique ni donnée personnelle n'est enregistré
+      par cette application.
+    </div>
+
+  </main>
+
+
+  <!--
+    Bibliothèque open-source permettant d'utiliser
+    la caméra du téléphone pour lire les codes-barres.
+  -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+
+  <script>
+
+    let scanner = null;
+    let currentISBN = null;
+    let scanInProgress = false;
+
+
+    const reader = document.getElementById("reader");
+    const scanZone = document.getElementById("scanZone");
+
+    const scanButton = document.getElementById("scanButton");
+    const stopButton = document.getElementById("stopButton");
+
+    const vintedButton = document.getElementById("vintedButton");
+    const newScanButton = document.getElementById("newScanButton");
+
+    const isbnDisplay = document.getElementById("isbn");
+    const message = document.getElementById("message");
+
+
+    // --------------------------------------------------
+    // Vérification d'un ISBN-13
+    // --------------------------------------------------
+
+    function isValidISBN13(isbn) {
+
+      if (!/^\d{13}$/.test(isbn)) {
+        return false;
+      }
+
+      let sum = 0;
+
+      for (let i = 0; i < 12; i++) {
+
+        const digit = parseInt(isbn[i], 10);
+
+        sum += digit * (i % 2 === 0 ? 1 : 3);
+      }
+
+      const checkDigit = (10 - (sum % 10)) % 10;
+
+      return checkDigit === parseInt(isbn[12], 10);
+    }
+
+
+    // --------------------------------------------------
+    // Scanner
+    // --------------------------------------------------
+
+    async function startScanner() {
+
+      if (scanInProgress) {
+        return;
+      }
+
+      scanInProgress = true;
+
+      currentISBN = null;
+
+      isbnDisplay.style.display = "none";
+      vintedButton.style.display = "none";
+      newScanButton.style.display = "none";
+
+      reader.style.display = "block";
+      scanZone.style.display = "block";
+
+      scanButton.style.display = "none";
+      stopButton.style.display = "block";
+
+      message.textContent =
+        "Autorise l'accès à la caméra si l'iPhone te le demande.";
+
+      scanner = new Html5Qrcode("reader");
+
+      try {
+
+        await scanner.start(
+
+          {
+            facingMode: {
+              exact: "environment"
+            }
+          },
+
+          {
+            fps: 10,
+
+            qrbox: {
+              width: 300,
+              height: 120
+            },
+
+            formatsToSupport: [
+              Html5QrcodeSupportedFormats.EAN_13
+            ]
+          },
+
+          handleScan,
+
+          function () {
+            // Les échecs individuels sont normaux :
+            // la caméra analyse continuellement.
+          }
+
+        );
+
+        message.textContent =
+          "Recherche du code-barres…";
+
+      } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+          "Impossible d'accéder à la caméra. " +
+          "Vérifie l'autorisation de Safari.";
+
+        await stopScanner();
+      }
+    }
+
+
+    // --------------------------------------------------
+    // Code-barres détecté
+    // --------------------------------------------------
+
+    async function handleScan(decodedText) {
+
+      if (!scanInProgress) {
+        return;
+      }
+
+      const isbn = decodedText.replace(/\D/g, "");
+
+      if (!isValidISBN13(isbn)) {
+
+        message.textContent =
+          "Ce code-barres n'est pas un ISBN-13 valide.";
+
+        return;
+      }
+
+      // Empêche plusieurs détections successives
+      scanInProgress = false;
+
+      currentISBN = isbn;
+
+      await stopScanner();
+
+      isbnDisplay.textContent = isbn;
+      isbnDisplay.style.display = "block";
+
+      message.textContent =
+        "ISBN détecté avec succès.";
+
+      vintedButton.style.display = "block";
+      newScanButton.style.display = "block";
+    }
+
+
+    // --------------------------------------------------
+    // Arrêter la caméra
+    // --------------------------------------------------
+
+    async function stopScanner() {
+
+      scanInProgress = false;
+
+      if (scanner) {
+
+        try {
+
+          await scanner.stop();
+          scanner.clear();
+
+        } catch (error) {
+
+          console.log(error);
+        }
+
+        scanner = null;
+      }
+
+      reader.style.display = "none";
+      scanZone.style.display = "none";
+
+      stopButton.style.display = "none";
+      scanButton.style.display = "block";
+    }
+
+
+    // --------------------------------------------------
+    // Recherche Vinted
+    // --------------------------------------------------
+
+    function searchVinted() {
+
+      if (!currentISBN) {
+        return;
+      }
+
+      const vintedURL =
+        "https://www.vinted.fr/catalog?search_text=" +
+        encodeURIComponent(currentISBN);
+
+      /*
+        On ouvre Vinted dans la même fenêtre.
+        L'ISBN est le SEUL terme envoyé dans la recherche.
+      */
+
+      window.location.href = vintedURL;
+    }
+
+
+    // --------------------------------------------------
+    // Nouveau scan
+    // --------------------------------------------------
+
+    function newScan() {
+
+      currentISBN = null;
+
+      isbnDisplay.style.display = "none";
+      vintedButton.style.display = "none";
+      newScanButton.style.display = "none";
+
+      message.textContent = "";
+
+      startScanner();
+    }
+
+
+    // --------------------------------------------------
+    // Boutons
+    // --------------------------------------------------
+
+    scanButton.addEventListener(
+      "click",
+      startScanner
+    );
+
+    stopButton.addEventListener(
+      "click",
+      stopScanner
+    );
+
+    vintedButton.addEventListener(
+      "click",
+      searchVinted
+    );
+
+    newScanButton.addEventListener(
+      "click",
+      newScan
+    );
+
+  </script>
+
+</body>
+</html>
