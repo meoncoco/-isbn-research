@@ -1,6 +1,6 @@
 :root {
-  --vinted-green: #007782;
-  --vinted-green-dark: #005f68;
+  --green: #007782;
+  --green-dark: #005f68;
   --background: #f5f5f5;
   --card: #ffffff;
   --text: #292929;
@@ -25,7 +25,6 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     Roboto,
-    Helvetica,
     Arial,
     sans-serif;
 }
@@ -43,7 +42,7 @@ button {
   width: 100%;
   max-width: 520px;
 
-  margin: 0 auto;
+  margin: auto;
 
   padding: 20px 16px 40px;
 }
@@ -62,8 +61,6 @@ button {
 
   font-size: 28px;
   font-weight: 750;
-
-  letter-spacing: -0.5px;
 }
 
 .header p {
@@ -81,8 +78,8 @@ button {
 
 .scanner-card,
 .result-card,
-.history-card,
-.analysis-card {
+.analysis-card,
+.history-card {
   background: var(--card);
 
   border-radius: 16px;
@@ -97,30 +94,125 @@ button {
 
 
 /* =========================
-   SCANNER
+   CAMERA
 ========================= */
 
-#reader {
-  display: none;
+.camera-container {
+  position: relative;
 
   width: 100%;
 
   overflow: hidden;
 
-  border-radius: 12px;
+  border-radius: 14px;
+
+  background: #000;
 }
 
-#reader video {
-  width: 100% !important;
-  height: auto !important;
+#camera-video {
+  display: block;
 
-  border-radius: 12px;
+  width: 100%;
+
+  height: auto;
+
+  min-height: 260px;
+
+  object-fit: cover;
 }
+
+.scan-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  pointer-events: none;
+}
+
+.scan-box {
+  position: relative;
+
+  width: 85%;
+
+  height: 110px;
+
+  border:
+    2px solid white;
+
+  border-radius: 8px;
+
+  box-shadow:
+    0 0 0 9999px
+    rgba(0, 0, 0, 0.30);
+}
+
+.scan-line {
+  position: absolute;
+
+  left: 5%;
+  right: 5%;
+
+  top: 50%;
+
+  height: 2px;
+
+  background: #ff375f;
+
+  box-shadow:
+    0 0 8px #ff375f;
+
+  animation:
+    scanLine 1.8s ease-in-out infinite;
+}
+
+@keyframes scanLine {
+
+  0% {
+    top: 10%;
+  }
+
+  50% {
+    top: 90%;
+  }
+
+  100% {
+    top: 10%;
+  }
+}
+
+.scan-overlay p {
+  margin-top: 18px;
+
+  padding: 7px 12px;
+
+  border-radius: 20px;
+
+  background:
+    rgba(0, 0, 0, 0.65);
+
+  color: white;
+
+  font-size: 13px;
+}
+
+
+/* =========================
+   PLACEHOLDER
+========================= */
 
 .scanner-placeholder {
   height: 250px;
 
-  border: 2px dashed var(--border);
+  border:
+    2px dashed var(--border);
 
   border-radius: 12px;
 
@@ -132,9 +224,9 @@ button {
 
   align-items: center;
 
-  color: var(--muted);
-
   text-align: center;
+
+  color: var(--muted);
 }
 
 .scanner-placeholder strong {
@@ -162,7 +254,9 @@ button {
 
 .primary-button,
 .secondary-button,
+.capture-button,
 .vinted-button {
+
   width: 100%;
 
   min-height: 52px;
@@ -176,31 +270,43 @@ button {
   margin-top: 12px;
 }
 
-.primary-button {
-  background: var(--vinted-green);
+.primary-button,
+.vinted-button {
+
+  background: var(--green);
 
   color: white;
 }
 
-.primary-button:active {
-  background: var(--vinted-green-dark);
+.primary-button:active,
+.vinted-button:active {
+
+  background: var(--green-dark);
 }
 
 .secondary-button {
+
   background: #eeeeee;
 
   color: var(--text);
 }
 
-.vinted-button {
-  background: var(--vinted-green);
+.capture-button {
+
+  background: #ff375f;
 
   color: white;
 
   font-size: 16px;
 }
 
+.vinted-button {
+
+  font-size: 16px;
+}
+
 .vinted-button:disabled {
+
   opacity: 0.4;
 
   cursor: not-allowed;
@@ -212,24 +318,23 @@ button {
 ========================= */
 
 .result-card label {
+
   display: block;
+
+  margin-bottom: 7px;
 
   font-size: 14px;
 
   font-weight: 700;
-
-  margin-bottom: 7px;
 }
 
 .isbn-row {
+
   position: relative;
-
-  display: flex;
-
-  align-items: center;
 }
 
 #isbn {
+
   width: 100%;
 
   height: 52px;
@@ -243,25 +348,29 @@ button {
 
   border-radius: 10px;
 
+  outline: none;
+
   font-size: 18px;
 
-  letter-spacing: 0.5px;
-
-  outline: none;
+  letter-spacing: .5px;
 }
 
 #isbn:focus {
-  border-color: var(--vinted-green);
+
+  border-color:
+    var(--green);
 
   box-shadow:
     0 0 0 2px
-    rgba(0, 119, 130, 0.12);
+    rgba(0, 119, 130, .12);
 }
 
 .clear-button {
+
   position: absolute;
 
   right: 7px;
+  top: 7px;
 
   width: 38px;
   height: 38px;
@@ -272,18 +381,14 @@ button {
 
   background: #eeeeee;
 
-  color: #555;
-
   font-size: 24px;
-
-  line-height: 1;
 }
 
 .status {
+
   min-height: 18px;
 
-  margin:
-    7px 2px 0;
+  margin: 7px 2px 0;
 
   font-size: 13px;
 
@@ -291,19 +396,22 @@ button {
 }
 
 .status.valid {
+
   color: var(--success);
 }
 
 .status.invalid {
+
   color: var(--danger);
 }
 
 
 /* =========================
-   ANALYSE
+   ANALYSIS
 ========================= */
 
 .analysis-card {
+
   display: flex;
 
   align-items: center;
@@ -312,6 +420,7 @@ button {
 }
 
 .analysis-card p {
+
   margin: 4px 0 0;
 
   color: var(--muted);
@@ -320,6 +429,7 @@ button {
 }
 
 .spinner {
+
   width: 30px;
   height: 30px;
 
@@ -329,15 +439,16 @@ button {
     3px solid #e5e5e5;
 
   border-top-color:
-    var(--vinted-green);
+    var(--green);
 
   border-radius: 50%;
 
   animation:
-    spin 0.8s linear infinite;
+    spin .8s linear infinite;
 }
 
 @keyframes spin {
+
   to {
     transform: rotate(360deg);
   }
@@ -349,6 +460,7 @@ button {
 ========================= */
 
 .section-title {
+
   display: flex;
 
   justify-content: space-between;
@@ -357,17 +469,19 @@ button {
 }
 
 .section-title h2 {
+
   margin: 0;
 
   font-size: 18px;
 }
 
 .section-title button {
+
   border: 0;
 
   background: transparent;
 
-  color: var(--vinted-green);
+  color: var(--green);
 
   font-size: 13px;
 
@@ -375,15 +489,17 @@ button {
 }
 
 .history-list {
+
   margin-top: 12px;
 }
 
 .history-item {
+
   display: flex;
 
-  align-items: center;
-
   justify-content: space-between;
+
+  align-items: center;
 
   padding: 12px 0;
 
@@ -392,22 +508,26 @@ button {
 }
 
 .history-isbn {
+
   font-size: 15px;
 
   font-weight: 600;
 }
 
 .history-search {
+
   border: 0;
 
-  background: #e7f5f6;
-
-  color: var(--vinted-green);
+  border-radius: 8px;
 
   padding:
     8px 11px;
 
-  border-radius: 8px;
+  background:
+    #e7f5f6;
+
+  color:
+    var(--green);
 
   font-size: 13px;
 
@@ -415,6 +535,7 @@ button {
 }
 
 .empty-history {
+
   margin: 12px 0 0;
 
   color: var(--muted);
@@ -428,13 +549,14 @@ button {
 ========================= */
 
 footer {
+
+  padding-top: 10px;
+
   text-align: center;
 
   color: #999;
 
   font-size: 12px;
-
-  padding-top: 10px;
 }
 
 
@@ -444,20 +566,4 @@ footer {
 
 .hidden {
   display: none !important;
-}
-
-
-/* =========================
-   DESKTOP
-========================= */
-
-@media (min-width: 700px) {
-
-  .app {
-    padding-top: 40px;
-  }
-
-  .scanner-placeholder {
-    height: 300px;
-  }
 }
